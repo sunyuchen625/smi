@@ -1,0 +1,102 @@
+---
+title: ""
+author: ""
+date: ""
+output: pdf_document
+---
+
+```{r setup2, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(tidyverse)
+```
+
+## Load in the data
+
+```{r}
+# The here package can just make finding files nice, don't be put off by it.
+crop <- read_csv(here::here("data/crop.csv"), col_types = cols())
+head(crop) # Check it has read in properly
+```
+* Type has read in as a double, let's change that to a factor.
+
+```{r}
+crop <- crop %>% 
+  mutate(Type = as.factor(Type))
+```
+
+
+## Get a scatter plot
+
+```{r}
+crop %>% 
+  ggplot(aes(x = Salinity, y = Height, colour = Type)) +
+  geom_point() + 
+  geom_smooth(method = lm, formula = y ~ x, se = FALSE) +
+  labs(y="Height (cm)", x="Salinity level", col="Type of crop")
+```
+
+## Fit the 3 different ANCOVA models
+
+```{r}
+identical <- lm(Height ~ Salinity, data = crop)
+parallel <- lm(Height ~ Salinity + Type, data = crop)
+separate <- lm(Height ~ Salinity * Type, data = crop)
+```
+
+```{r}
+summary(separate)
+```
+
+## Test for a significant interaction term
+
+For this, we compare the parallel regressions to the separate regressions using an ANOVA:
+
+```{r}
+anova(parallel, separate)
+```
+
+## Obtain the BIC
+
+```{r}
+BIC(identical, parallel, separate)
+```
+
+## Assumption plots:
+
+```{r}
+plot(separate)
+```
+
+## The hard one! contrast time
+
+```{r}
+# Load the emmeans library
+library(emmeans)
+# create emmeans object, we are interested in breaking up the separate model
+# by crop type.
+crop_emmeans <- emmeans(separate,~"Type") 
+```
+
+```{r}
+# Create the contrast object
+# This is saying we want to compare type II with type III
+crop_contrast <- contrast(crop_emmeans,method=list("Type_II-III"=c(0,1,-1)))
+crop_contrast
+```
+
+```{r}
+# get the CI
+confint(crop_contrast)
+```
+
+
+
+
+
+
+
+
+
+
+
+

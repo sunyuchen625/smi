@@ -1,0 +1,58 @@
+
+4. Consider data \((x_1, Y_1), (x_2, Y_2), \dots, (x_n, Y_n)\) for which you want to fit the simple linear regression model.  Consider the matrix representation
+\[\boldsymbol{Y} = X\boldsymbol{\beta} + \varepsilon\]
+where
+\[\boldsymbol{Y} = \begin{bmatrix} Y_1\\ Y_2\\ \vdots\\ Y_n \end{bmatrix}\, , \quad X = \begin{bmatrix} 1 & x_1 \\ 1 & x_2 \\ \vdots & \vdots \\ 1 & x_n \end{bmatrix}\, , \quad \text{ and } \boldsymbol{\beta} = \begin{bmatrix} \beta_0\\ \beta_1 \end{bmatrix} \]
+that was introduced.  In lecture, we found that the matrix formulation
+\[ \hat{\boldsymbol{\beta}} = (X^TX)^{-1}X^T \boldsymbol{Y} \]
+gives the least squares estimates \(\hat\beta_0 = \bar{Y} - \hat\beta_1 x_i\) and \(\hat\beta_1 = \dfrac{S_{XY}}{S_{XX}}\).  By using the fact that
+\[\mathrm{Var}(\hat{\boldsymbol{\beta}}) = \sigma^2 (X^T X)^{-1}\, ,\]
+derive that
+\[ \mathrm{Var}(\hat\beta_0) = \sigma^2\left( \frac{1}{n} + \frac{\bar{x}^2}{S_{XX}} \right) \quad \text{and}\quad \mathrm{Var}(\hat\beta_1) = \frac{\sigma^2}{S_{XX}}\, .\]
+
+**Hint: For a random variable \(\boldsymbol{Z} = \begin{bmatrix} Z_1 \\ Z_2\end{bmatrix}\), you have that**
+
+\[ \mathrm{Var}(\boldsymbol{Z}) = \begin{bmatrix} \sigma_1^2 & \sigma_{12} \\ \sigma_{12} & \sigma_2^2 \end{bmatrix}\, , \]
+
+**where**
+
+\[ \sigma_1^2 = \mathrm{Var}(Z_1)\, , \sigma_2^2 = \mathrm{Var}(Z_2)\, \text{ and }\, \sigma_{12} = \mathrm{Cov}(Z_1, Z_2)\, . \]
+
+::: {.solutions data-latex=""}
+Since 
+
+$$
+  \mathrm{Var}(\hat\beta) = \sigma^2 (X^T X)^{-1}\, ,
+$$
+we find that
+
+$$
+  \begin{aligned}
+    \mathrm{Var}(\hat\beta) &= \sigma^2 (X^T X)^{-1}\\
+      & = \frac{\sigma^2}{nS_{XX}}
+        \begin{bmatrix}
+          \sum\limits_{i = 1}^n x_i^2 & -n\bar{x}\\
+          -n\bar{x} & n
+        \end{bmatrix} \qquad \\
+      & = \sigma^2
+        \begin{bmatrix}
+          \frac{\sum\limits_{i = 1}^n x_i^2}{nS_{XX}} & -\frac{\bar{x}}{S_{XX}}\\
+          -\frac{\bar{x}}{S_{XX}} & \frac{1}{S_{XX}}
+        \end{bmatrix}.
+  \end{aligned}
+$$
+
+Since the diagonal elements represent the variance, we already have that $\mathrm{Var}(\hat\beta_1) = \frac{\sigma^2}{S_{XX}}$.  Focusing on the first element of the matrix, we see that
+
+$$
+  \begin{aligned}
+    \mathrm{Var}(\hat\beta_0) &= \sigma^2\dfrac{\sum\limits_{i = 1}^n x_i^2}{nS_{XX}} \\
+      & = \sigma^2\dfrac{\sum\limits_{i = 1}^n x_i^2 + n\bar{x}^2 - n\bar{x}^2}{nS_{XX}} \\
+      & = \sigma^2 \left( \frac{\sum\limits_{i = 1}^n x_i^2 - n\bar{x}^2}{nS_{XX}} + \frac{ n\bar{x}^2}{nS_{XX}}\right)\\
+      & = \sigma^2 \left( \frac{S_{XX}}{nS_{XX}} + \frac{\bar{x}^2}{S_{XX}}\right)\\
+      & = \sigma^2 \left( \frac{1}{n} + \frac{\bar{x}^2}{S_{XX}}\right)\, ,
+  \end{aligned}
+$$
+
+as required.
+:::

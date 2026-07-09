@@ -1,0 +1,450 @@
+---
+params:
+  ms: no
+  sol: no
+  title: ''
+  seed: 
+title: |
+  | Statistical Modelling and Inference
+  | Theory test 
+  | `r params$title`
+date: "Spring \\the\\year"
+output:
+  pdf_document: 
+    includes:
+      in_header: header.tex
+  html_document: default
+institute: School of Mathematical Sciences, University of Adelaide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+pacman::p_load(tidyverse)
+
+## For quick access
+if(is.null(params$seed)){
+  set.seed(2222)
+}else{
+  set.seed(params$seed)
+}
+
+Q_total  <- 0
+A_total  <- 0
+q_mark  <- 0
+
+question_rubric <- full_rubric <- tibble(Criteria = character(),
+                                         mark = numeric(),
+                                         comment = character())
+
+source("assignment_fns.R")
+```
+
+```{asis, echo = !params$sol, include=!params$sol}
+\excludeversion{solutions}
+```
+
+You have a total of 100 minutes to complete this test. Do not begin this test until you are ready to start.
+
+
+* This is an open book test, however you MUST NOT collaborate with other students or ask for help on the Internet. By completing this test, you agree to the academic honesty policy.
+
+1. Let $Y \sim Bin(n,p)$ and consider two estimators for $p$; namely
+
+$$
+\hat{p}_1=\frac{Y}{n}\mbox{ and } \hat{p}_2=\frac{Y+1}{n+2}.
+$$
+
+  a. Show that $\hat p_1$ is unbiased for $p$.  `r add_marks(4)` `r add_rubric_part("(a)")`
+  b. Derive the bias of $\hat p_2$.  `r add_marks(4)` `r add_rubric_part("(b)")`
+  c. Find $MSE_{\hat{p}_1}(p)$ and $MSE_{\hat{p}_2}(p)$.  `r add_marks(8)` `r add_rubric_part("(c)")`
+  d. If $p = 0.5$, which estimator is preferred by MSE? Justify your answer. `r add_marks(2)` `r add_rubric_part("(d)")`
+`r add_Q_total()`
+`r add_rubric_question(1)`
+\newpage
+
+::: {.solutions data-latex=""}
+i.
+$$
+\begin{aligned}
+E[\hat{p}_1] &= E[Y/n]\\
+&= \frac1n E[Y]\\
+&= \frac{np}{n}\\
+&= p.
+\end{aligned}
+$$
+ii. 
+$$
+  \begin{aligned}
+    b_{\hat{p}_2}(p) &= E[\hat{p}_2] - p\\
+      &= E\left[\frac{Y+1}{n+2}\right] - p\\
+      &= \frac{np + 1}{n + 2} - p\\
+      &= \frac{np + 1 - p(n+2)}{n + 2}\\
+      &= \frac{1 - 2p}{n + 2}.
+  \end{aligned}
+$$
+iii.
+$$
+\begin{aligned}
+MSE_{\hat{p}_1}(p) &= \mathrm{Var}(\hat{p}_1) + b_{\hat{p}_1}(p)^2\\
+&= \mathrm{Var}(Y/n) + 0\\
+&= \frac{1}{n^2}\mathrm{Var}(Y)\\
+&= \frac{np(1-p)}{n^2}\\
+&= \frac{p(1-p)}{n}.\\
+\end{aligned}
+$$
+$$
+\begin{aligned}
+MSE_{\hat{p}_2}(p) &= \mathrm{Var}\left(\hat{p}_2\right) + b_{\hat{p}_2}(p)^2\\
+&= \mathrm{Var}\left(\frac{Y+1}{n+2}\right) + \left(\frac{1-2p}{n+2}\right)^2\\
+&= \frac{\mathrm{Var}(Y) + (1-2p)^2}{(n+2)^2}\\
+&= \frac{np(1-p) + (1-2p)^2}{(n+2)^2}.\\
+\end{aligned}
+$$
+iv.
+$$
+  \begin{aligned}
+    MSE_{\hat{p}_1}(p) &= \frac{1}{4n}
+  \end{aligned}
+$$
+$$
+  \begin{aligned}
+    MSE_{\hat{p}_2}(p) &= \frac{n}{4(n+2)^2}\\
+      &= \frac{1}{4(n+4+4/n)}
+  \end{aligned}
+$$
+$MSE_{\hat{p}_2}(p) < MSE_{\hat{p}_1}(p)$, so we prefer $\hat{p}_2$.
+:::  
+
+
+
+
+
+ 
+
+
+```{r}
+mu_vec <- seq(200, 300, by = 10)
+n_vec <- 20:50
+sig_vec <- seq(1, 4, by = 0.2)
+
+#### Set up selected values
+mu1 <- sample(mu_vec, 1)
+mu2 <- sample(mu_vec, 1)
+a <- 0.05
+n1 <- sample(n_vec, 1)
+n2 <- sample(n_vec, 1)
+sig1 <- sample(sig_vec, 1)
+sig2 <- sample(sig_vec, 1)
+
+#### Sample
+x1 <- rnorm(n1, mu1, sig1)
+x2 <- rnorm(n2, mu2, sig2)
+xbar1 <- round(mean(x1), 2)
+xbar2 <- round(mean(x2), 2)
+s2_1 <- round(var(x1), 2)
+s2_2 <- round(var(x2), 2)
+
+## To pool or not to pool
+ratio <- round(max(sqrt(s2_1), sqrt(s2_2)) / min(sqrt(s2_1), sqrt(s2_2)), 4)
+
+type <- ifelse(ratio < 2, "pooled", "non-pooled")
+
+## S_p
+
+s2_p <- ((n1 - 1) * s2_1 + (n2 - 1) * s2_2)/(n1 + n2 - 2)
+
+#### Test Stat
+if(ratio < 2){
+  t <- t_pooled <- round((xbar1 - xbar2)/(sqrt(s2_p) * sqrt(1/n1 + 1/n2)),3)
+}else{
+  t <- t_not_pooled <- round((xbar1 - xbar2)/(sqrt(s2_1/n1 + s2_2/n2)), 3)
+}
+
+#### DF
+df_pooled <- n1 + n2 - 2
+df_not_pooled <- ( s2_1/n1 + s2_2/n2 )^2/( s2_1^2/(n1^2*(n1 - 1)) + s2_2^2/(n2^2*(n2 - 1)))
+
+if(ratio < 2){
+  df <- df_pooled <- n1 + n2 - 2
+}else{
+  df <- df_not_pooled <- round(( s2_1/n1 + s2_2/n2 )^2/( s2_1^2/(n1^2*(n1 - 1)) + s2_2^2/(n2^2*(n2 - 1))), 3)
+}
+df2 <- min(n1 - 1, n2 - 1)
+
+
+#### CI
+ci_pooled <- round(c(
+  (xbar1 - xbar2) - qt(1 - a/2, df_pooled) * sqrt(s2_p) * sqrt(1/n1 + 1/n2),
+  (xbar1 - xbar2) + qt(1 - a/2, df_pooled) * sqrt(s2_p) * sqrt(1/n1 + 1/n2)
+), 3)
+
+ci_not_pooled <- round(c(
+  (xbar1 - xbar2) - qt(1 - a/2, df_not_pooled) * (sqrt(s2_1/n1 + s2_2/n2)),
+  (xbar1 - xbar2) + qt(1 - a/2, df_not_pooled) * (sqrt(s2_1/n1 + s2_2/n2))
+), 3)
+
+ci_not_pooled2 <- round(c(
+  (xbar1 - xbar2) - qt(1 - a/2, df2) * (sqrt(s2_1/n1 + s2_2/n2)),
+  (xbar1 - xbar2) + qt(1 - a/2, df2) * (sqrt(s2_1/n1 + s2_2/n2))
+), 3)
+
+ci_wrong <- round(c(
+  (xbar1 - xbar2) - qnorm(1 - a/2) * (sqrt((s2_1+s2_2)/(n1 + n2))),
+  (xbar1 - xbar2) + qnorm(1 - a/2) * (sqrt((s2_1+s2_2)/(n1 + n2)))
+), 3)
+ 
+
+if(ratio < 2){
+  ci <- ci_pooled
+}else{
+  ci <- ci_not_pooled
+}
+```
+
+
+2. Farmer Joe is the owner of the local apple farm and they believe they have the best Pink Lady apples around.  However, the local supermarket *Wooles* has decided they would prefer to start importing their apples from the next town over since they claim their apples are "Bigger and Better". You are a staunch supporter of Farmer Joe's apples, and you don't think the imported apples are any different, so you've decide to go and test whether there is a significant difference in the mean weight of apples from Farmer Joe's and *Wooles*.  You collected a random sample of **`r n1`** apples from Farmer Joe's farm, and a random sample **`r n2`** apples from *Wooles*.  For the apples from Farmer Joe's farm, you found they had a mean weight of **`r xbar1`** grams, with a variance of **`r s2_1`**.  For the apples from *Wooles*, you found they had a mean weight of **`r xbar2`** grams, with a variance of **`r s2_2`**.  Assuming the weight of apples from each producer is normally distributed, do the test at the \(\alpha =\) **`r a`** level of significance, where \(\mu_1\) is the true mean weight of apples at Farmer Joe's farm and \(\mu_2\) is the true mean weight of apples at *Wooles*.(Round all your answers to three decimal places.)
+
+Some values you may need 
+
+$t_{78,0.025}=1.990$,  $t_{77,0.025}$=`r round(qt(0.975,77),3)`,  $t_{78,0.975}$=`r round(qt(0.025,78),3)`,  $t_{77,0.975}=-1.990$
+
+$F_{43,34,0.05}$=`r round( qf(0.95,43,34), 3)`, $F_{34,43,0.05}$=`r round( qf(0.95,34,43), 3)`, 
+$F_{43,34,0.95}$=`r round( qf(0.05,43,34), 3)`, $F_{34,43,0.95}$=`r round( qf(0.05,34,43), 3)`
+
+
+a. Write down the \(H_0\) and  \(H_a\) of the hypothesis test.`r add_marks(4)` `r add_rubric_part("(a)")`
+b. For this test, we will do a 2-sample pooled or non-pooled t-test. Please describe the reason. `r add_marks(2)` `r add_rubric_part("(b)")`
+c. Find the corresponding test statistic and reject region for the test. Do you reject or retain the hypothesis in Part a? Why or why not? `r add_marks(8)` `r add_rubric_part("(c)")`
+d. What is the appropriate 95% confidence interval for the difference for this test ? What is your conclusion?`r add_marks(4)` `r add_rubric_part("(d)")`
+e. Find the P-value associated with this test (write the answer with R-code calculation)`r add_marks(4)` `r add_rubric_part("(e)")`
+f. In addition, you have questioned whether the variance of apples' weight at Farmer Joe's farm greater or equal than *Wooles*.  Perform the hypothesis test at the $\alpha = 0.05$ level of significance.  Your hypothesis test should include:
+  
+* Your test statistic and the distribution of the test statistic under the null hypothesis.
+* The observed value of your test statistic.
+* The critical region for this hypothesis test.
+* Your conclusion in context. `r add_marks(8)` `r add_rubric_part("(f)")`
+
+  
+`r add_Q_total()`       
+`r add_rubric_question(2)`
+\newpage
+::: {.solutions data-latex=""}
+```{r}
+sols <-
+  c("$t_{obs} < 0$: Since $|t_{obs}| > t_{df, \\alpha/2}$, there is sufficient evidence to reject the the null hypothesis at the $\\alpha = 0.05$ level of significance.  This means that there is sufficient evidence to suggest the true mean weight of apples from *Wooles* is larger than the true mean weight of apples from Farmer Joe's (how sad).",
+"$t_{obs} > 0$: Since $|t_{obs}| > t_{df, \\alpha/2}$, there is sufficient evidence to reject the the null hypothesis at the $\\alpha = 0.05$ level of significance.  This means that there is sufficient evidence to suggest the true mean weight of apples from *Wooles* is smaller than the true mean weight of apples from Farmer Joe's (YAY).",
+"Since $|t_{obs}| < t_{df, \\alpha/2}$, there is insufficient evidence to reject the the null hypothesis at the $\\alpha = 0.05$ level of significance.  This means that there is insufficient evidence to suggest the true mean weight of apples from *Wooles* is any different from the true mean weight of apples from Farmer Joe's."
+)
+
+if(t > ci[1] & t < ci[2]){
+  sols <- sols[3]
+}else if ((t < ci[1] | t > ci[2]) & sign(t) < 0){
+  sols <- sols[1]
+}else if ((t < ci[1] | t > ci[2]) & sign(t) > 0){
+  sols <- sols[2]
+}
+```
+
+a. \(H_0\):$\mu_1-\mu_2=0$ and  \(H_a\):$\mu_1-\mu_2\neq 0$
+
+b. For this test, we will do a 2-sample **`r type`** t-test. 
+Our rule of thumb to decide between pooled and not pooled is
+$$
+  \frac{\max\{s_1, s_2\}}{\min\{s_1, s_2\}}= \frac{\sqrt{2.73}}{\sqrt{1.66}}< 2\,.
+$$
+
+c. The corresponding test statistic is **`r t`**, which follows a t-distribution with **`r df`** degrees of freedom.
+$$
+s_{p}^{2} =\frac{(n_1 - 1)  s_{1}^{2}+ (n_2 - 1)s_{2}^{2}}{(n1 + n2 - 2)} =\frac{43(2.73)+34(1.66)}{77}=2.258
+$$If we are doing a pooled t-test, then the appropriate test statistic is
+$$
+  t = \frac{ \bar{X}_1 - \bar{X}_2}{s_p\sqrt{\frac{1}{n_1} + \frac{1}{n_2}}} = \frac{200.07-199.69}{\sqrt{2.258(\frac{1}{44} + \frac{1}{35})}}=1.117
+  \sim t_{77, 0.025}\, .
+$$
+The reject region is $|t_{obs}|\geq t_{77,0.025}$. Since 1.117 < $t_{77,0.025}$=1.990 ,there is insufficient evidence to reject the the null hypothesis at the 0.05 level of significance.  This means that there is insufficient evidence to suggest the true mean weight of apples from *Wooles* is any different from the true mean weight of apples from Farmer Joe's.
+
+d. **`r str_c("The appropriate 95% confidence interval for the difference for this test is (", ci[1], ", ", ci[2], ")")`**.Since, 0 is in the CI, we will not reject the null hypothesis at the 0.05 level of significance.
+The appropriate CI is given by
+$$
+  \bar{X}_1 - \bar{X}_2 \pm t_{n1 + n2 - 2, \alpha/2}\, s_p\sqrt{\frac{1}{n_1} + \frac{1}{n_2}}\, .
+$$
+e. P-value associated with this test.
+$$
+  P\_value=Pr(|T|>t_{obs})=2Pr(T>1.117)=2*(1-pt(1.117,77))
+$$
+
+f. Consider the hypothesis test
+$$
+H_0: \sigma_1^2 - \sigma_2^2 \geq 0 \quad\text{vs}\quad H_a: \sigma_1^2 - \sigma_2^2 < 0\, ,
+$$
+at the $\alpha = 0.05$ level of significance.  The appropriate test statistic is
+$$
+F = \frac{S_1^2/\sigma_1^2}{S_2^2/\sigma_2^2} = \frac{S_1^2}{S_2^2} \sim F_{43,34}
+$$
+under the null hypothesis.The observed value of our test statistic is The $f_{obs}$=`r round(2.73/1.66,3)`, The Reject region for this test is:$C_{0.05} =(f_{obs}:f_{obs} >F_{43,34,0.05}$=`r round( qf(0.95,43,34), 2)`. Since $f_{obs} < F_{43,34,0.05}=`r round( qf(0.95,43,34), 3)`$, there isn't enough evidence to reject the null hypothesis at the $5\%$ level. In context, this says that it is reasonable to assume that the variance of apples' weight at Farmer Joe's farm greater or equal than *Wooles*.
+:::
+
+
+3. Suppose we have independent random variables 
+$$
+Y_{ij},\ i=1,2;\ j = 1, 2, \ldots, n_i 
+$$
+$$
+  Y_{ij},\ i=1,2;\ j = 1, 2, \ldots, n_i 
+$$
+with $Y_{ij}\sim N(\mu_i,\sigma^2)$.We would like to do inference on a linear combination of the mean $\theta = a_1\mu_1+a_2\mu_2$. An intuitive estimator for $\theta$ is $\hat\theta$= $a_1 \bar{Y}_1 + a_2 \bar{Y}_2$, where $\bar{Y}_i$ is the sample mean of $Y_{i1}, Y_{i2}, \ldots, Y_{in_i}$.   
+(a) Find the standard error of the estimator $\hat\theta$.`r add_marks(3)` `r add_rubric_part("(a)")`
+(b) Find the distribution of the estimator $\hat\theta$. `r add_marks(3)` `r add_rubric_part("(b)")`
+(c) A pooled estimator for $\sigma^2$ is 
+    $$
+      S_p^2 = \frac{(n_1-1)S_1^2 + (n_2-1)S_2^2 }{n_1+n_2-2},
+    $$
+where $S_i^2$ is the sample variance of $Y_{i1}, Y_{i2}, \ldots, Y_{in_i}$. Show the distribution of 
+$$
+     W = \frac{(n_1+n_2-2) S_p^2}{\sigma^2} 
+        \quad \text{and} \quad 
+        T = \frac{\hat\theta-\theta}
+        {S_p \sqrt{\frac{a_1^2}{n_1} + \frac{a_2^2}{n_2}}}. 
+$$
+`r add_marks(8)` `r add_rubric_part("(c)")`
+(d) Using the results from part (c), give a $100(1-\alpha)\%$ confidence interval for $\theta$. `r add_marks(2)` `r add_rubric_part("(d)")`
+(e) Using the results from part (c), develop a hypothesis test for testing $H_0:\theta=\theta_0$ vs $H_a:\theta \neq \theta_0$, write down the test statistic and reject region `r add_marks(6)` `r add_rubric_part("(e)")`
+`r add_Q_total()`       
+`r add_rubric_question(3)`
+\newpage
+::: {.solutions data-latex=""}
+a.By independence of $Y_{ij}$,  
+$$
+          SE(\hat{\theta}) = \sqrt{\var(\hat{\theta})} = \sqrt{a_1^2 \var(\bar{Y}_1) + a_2^2 \var(\bar{Y}_2) }= \sigma \sqrt{\frac{a_1^2}{n_1} + \frac{a_2^2}{n_2} }.  
+$$
+          
+b.Since $\hat{\theta}$ is a linear combination of normal random variables $Y_{ij}$, by Lemma 1, we have 
+$$
+          \hat{\theta} \sim N\left(\theta, \sigma^2 
+                                   \left(\frac{a_1^2}{n_1} + \frac{a_2^2}{n_2})\right)\right).
+$$
+c.Observe that $\dfrac{(n_i-1)S_i^2}{\sigma^2} \sim \chi^2_{n_i-1}$ independently for $i=1, 2$. It follows that their sum is a $\chi^2_{n_1+n_2-2}$ random variable. So 
+$$
+    \frac{(n_1-1)S_1^2}{\sigma^2} + \frac{(n_2-1)S_2^2}{\sigma^2}
+  = \frac{(n_1-1)S_1^2 + (n_2-1)S_2^2}{\sigma^2} 
+    = W \sim \chi^2_{n_1+n_2-2}. 
+$$
+Furthermore, we have $T = \frac{Z}{\sqrt{W/(n_1+n_2-2)}} \sim t_{n_1+n_2-2}$, where $Z \sim N(0, 1)$. Hence, 
+    
+$$
+      T = \frac{\frac{\hat{\theta}-\theta}
+        {\sigma \sqrt{\frac{a_1^2}{n_1} + \frac{a_2^2}{n_2} }}}
+      {\sqrt{\frac{W}{n_1+n_2-2}}} 
+      = \frac{\frac{\hat{\theta}-\theta}
+        {\sigma \sqrt{\frac{a_1^2}{n_1} + \frac{a_2^2}{n_2} }}}
+      {\sqrt{\frac{(n_1+n_2-2) S_p^2}{(n_1+n_2-2) \sigma^2}}} 
+      = \frac{\hat{\theta}-\theta}
+      {S_p \sqrt{\frac{a_1^2}{n_1} + \frac{a_2^2}{n_2} }}
+      \sim t_{n_1+n_2-2}.
+$$
+In summary, we have
+$$
+        W \sim \chi^2_{n_1+n_2-2} 
+      \quad \text{and} \quad
+      T \sim t_{n_1+n_2-2}
+ $$
+d.
+$$
+        \text{CI} = \hat{\theta} \pm t_{n_1+n2-2, \alpha/2} 
+      S_p \sqrt{\frac{a_1^2}{n_1} + \frac{a_2^2}{n_2} }
+$$
+e.
+Test statistic: $t = \dfrac{\hat{\theta}-\theta_0}{S_p \sqrt{\frac{a_1^2}{n_1} + \frac{a_2^2}{n_2} }}$ (Under $H_0$, we have $t\sim t_{n_1+n_2-2}$.)\
+Critical region: $|t| \geq t_{n_1+n_2-2, \alpha/2}$
+:::
+
+4. The recorded time of study ($x$) and final score ($y$) for a group of students are given. We would like to investigate whether there is a relationship between time of study and final score. We used R to fitted  a simple linear regression model $Y_i=\beta_0+\beta_1x_i+\epsilon _i,  \epsilon _i\sim N(0,\sigma^2),$. Please read the R code and result, answer the following questions.(Round all your answers to three decimal places.)
+
+```{r q4,echo=TRUE,include=TRUE}
+x=c(2.5,5.1,3.2,8.5,3.5,1.5,9.2,5.5,8.3,2.7,7.7)
+y=c(21,47,27,75,30,20,88,60,81,25,85)
+x_bar=round(mean(x),3)
+y_bar=round(mean(y),3)
+n=length(x)
+sxx =round(sum(x^2) - sum(x)^2 / n,3)
+syy =round(sum(y^2) - sum(y)^2 / n,3)
+sxy =round(sum(x * y) - (sum(x) * sum(y)) / n,3)
+df = data.frame(n,x_bar,y_bar,sxx,syy,sxy)
+df
+```
+
+a. Use the method of least squares to find the value of $\hat\beta_0$, $\hat\beta_1$, and fit a straight line using these data points.`r add_marks(6)` `r add_rubric_part("(a)")`
+
+b. Under assumptions of SLM, the residual was defined as
+$$
+{\hat e}_i=y_i-(\hat\beta_0+\hat\beta_1x_i).
+$$
+and residual variance was defined as
+$$
+S_e^2=\frac{\sum_{i=1}^n\{Y_i-(\hat\beta_0+\hat\beta_1x_i)\}^2}{(n-2)}
+$$
+Using properties of residuals from our lecture to prove $S^2_e$ is an unbiased estimator for $\sigma^2$.`r add_marks(6)` `r add_rubric_part("(b)")`
+
+c. Calculate the residual variance associate with the model in a. `r add_marks(2)` `r add_rubric_part("(c)")`
+
+d. Test the significance of $\beta_1$ with $\alpha$ =0.05.($t_{9,0.025}$=`r round(qt(0.975,9),3)`,  $t_{9,0.975}$=`r round(qt(0.025,9),3)`, $t_{10,0.025}$=`r round(qt(0.975,10),3)`, $t_{10,0.975}$=`r round(qt(0.025,10),3)`) `r add_marks(8)` `r add_rubric_part("(d)")`
+
+e. Obtain the 95% confidence interval of $y_0$ for a new $x_0=5$.`r add_marks(4)` `r add_rubric_part("(e)")`
+
+f. Obtain the 95% prediction interval of $y_0$ for a new $x_0=5$. `r add_marks(4)` `r add_rubric_part("(f)")`
+`r add_Q_total()`
+`r add_rubric_question(4)`
+\newpage
+
+::: {.solutions data-latex=""}
+```{r q4_an,echo=FALSE,include=FALSE}
+beta_1=round(sxy/sxx,3)
+beta_0=round(y_bar-(sxy/sxx)*x_bar,3)
+re_var=round((syy-beta_1^2*sxx)/(n-2),3)
+t_obs=round(beta_1/(sqrt(re_var/sxx)),3)
+x_0=5
+y_0=beta_0+beta_1*x_0
+y_0_ci_left=round(y_0-qt(0.975,n-2)*sqrt(re_var)*sqrt((1/n)+(x_0-x_bar)^2/sxx),3)
+y_0_ci_right=round(y_0+qt(0.975,n-2)*sqrt(re_var)*sqrt((1/n)+(x_0-x_bar)^2/sxx),3)
+y_0_pi_left=round(y_0-qt(0.975,n-2)*sqrt(re_var)*sqrt(1+(1/n)+(x_0-x_bar)^2/sxx),3)
+y_0_pi_right=round(y_0+qt(0.975,n-2)*sqrt(re_var)*sqrt(1+(1/n)+(x_0-x_bar)^2/sxx),3)
+```
+a.
+$\hat\beta_1=$ `r beta_1` and $\hat\beta_0=$ `r beta_0`, The fiited model is $y=$ `r beta_0`+`r beta_1` $x$
+b.
+Recall from lectures the following properties of residuals:
+$$
+		E[\hat{e}_i] = 0 
+		\quad \text{and} \quad 
+		var(\hat{e}_i) = \sigma^2 \left(1-\frac{1}{n}-\frac{(x_i-\bar{x})^2}{S_{xx}}\right).
+$$
+We have
+$$
+\begin{aligned}
+E\left[\sum_{i=1}^n\{Y_i-(\hat\beta_0+\hat\beta_1x_i)\}^2\right]&=
+E\left(\sum_{i=1}^n {\hat e}_i^2\right)=\sum_{i=1}^n E({\hat e}_i^2)
+=\sum_{i=1}^n\left\{var({\hat e}_i) + E({\hat e}_i)^2\right\}\\
+&=\sum_{i=1}^n\sigma^2\left\{1-1/n-(x_i-\bar x)^2/S_{xx}\right\}+0^2\\
+&=\sigma^2\left\{\sum_{i=1}^n 1-\sum_{i=1}^n 1/n-\sum_{i=1}^n(x_i-\bar x)^2/S_{xx}\right\}\\
+&=\sigma^2(n-n/n-S_{xx}/S_{xx})\\
+&=(n-2)\sigma^2.
+\end{aligned}
+$$
+Hence, 
+$$
+E(S^2_e)=\frac{1}{(n-2)}E\left[\sum_{i=1}^n\{Y_i-(\hat\beta_0+\hat\beta_1x_i)\}^2\right] 
+=\frac{(n-2)\sigma^2}{(n-2)}=\sigma^2.
+$$
+c.
+$S^2_e=\frac{S{yy}-\hat\beta_1^2 S_{xx}}{n-2}$ =`r re_var` 
+d.
+$$
+      T = \frac{\hat{\beta_1}-\beta_1}
+      {S_e \sqrt{Sxx}} \sim t_{n-2}.
+$$
+The reject region for the test is$|t_{obs}|>t_{n-2,\frac{\alpha}{2}}$=`r round(qt(0.975,9),3)`. With calculation, $t_{obs}$=`r t_obs` falls into the reject region, so we have enough evidence to reject $H_0$. Therefore, $\beta_1$ is significant for the model with $\alpha$ =0.05, there is significant relationship between $x$and $y$. 
+e.
+The 95% confidence interval for $x= 5$ is (`r y_0_ci_left`,`r y_0_ci_right`).
+f.
+The 95% prediction interval for $x= 5$ is (`r y_0_pi_left`,`r y_0_pi_right`).
+:::

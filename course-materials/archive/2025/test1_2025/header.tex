@@ -1,0 +1,37 @@
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{versions}
+\definecolor{softblue}{RGB}{66,123,161}
+\definecolor{grey}{RGB}{100,100,100}
+\newenvironment{teacher}{\vspace{1cm}
+  \color{blue}\hrule
+  \textbf{Teacher notes: \\}
+}{
+  \hrule
+}
+\newenvironment{handout}{\color{grey}}{}
+\newenvironment{solutions}{\vspace{0.4cm}
+  \color{blue}\hrule
+  \vspace{0.2cm}
+  \textbf{Solutions: \\}
+}{
+  \vspace{0.2cm}
+  \hrule
+  \vspace{0.4cm}
+}
+
+\newenvironment{ms}{\vspace{1cm}
+  \color{red}\hrule
+  \textbf{Marking Scheme: \\}
+}{
+  \vspace{0.2cm}
+  \hrule
+}
+
+\newcommand{\var}{\text{var}}
+\newcommand{\sd}{\text{sd}}
+\newcommand{\bin}[1][n,p]{\text{Bin}(#1)}
+\DeclareMathOperator{\E}{E}
+\newcommand{\cov}{\text{cov}}
+\newcommand{\corr}{\text{corr}}
+\newcommand{\OR}{\cup}
