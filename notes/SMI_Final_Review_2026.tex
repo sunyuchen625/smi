@@ -1,0 +1,2242 @@
+% !TEX program = xelatex
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[UTF8,fontset=none]{ctex}
+\setCJKmainfont[BoldFont=Heiti SC,ItalicFont=Songti SC]{Songti SC}
+\setCJKsansfont{Heiti SC}
+\setCJKmonofont{Heiti SC}
+
+\usepackage{amsmath,amssymb,amsfonts,mathtools,amsthm}
+\usepackage{booktabs,array,longtable,tabularx}
+\usepackage[margin=1.9cm]{geometry}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.45em}
+\setlist[itemize]{leftmargin=*,topsep=2pt,itemsep=1.5pt}
+\setlist[enumerate]{leftmargin=*,topsep=2pt,itemsep=1.5pt}
+\allowdisplaybreaks
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small Statistical Modelling and Inference}
+\rhead{\small 2026 期末复习}
+\cfoot{\thepage}
+
+\hypersetup{
+  pdftitle={Statistical Modelling and Inference 2026 Final Review},
+  pdfauthor={Compiled from course notes, slides, and sample examinations}
+}
+
+\newcommand{\E}{\operatorname{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Bias}{\operatorname{Bias}}
+\newcommand{\MSE}{\operatorname{MSE}}
+\newcommand{\SE}{\operatorname{SE}}
+\newcommand{\iid}{\overset{\mathrm{iid}}{\sim}}
+\newcommand{\ind}{\perp\!\!\!\perp}
+\newcommand{\1}{\mathbf{1}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bH}{\mathbf{H}}
+\newcommand{\bI}{\mathbf{I}}
+\newcommand{\be}{\mathbf{e}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bvarepsilon}{\boldsymbol{\varepsilon}}
+
+\newtcolorbox{scopebox}[1][]{
+  colback=gray!5!white,colframe=gray!65!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{memorybox}[1][]{
+  colback=orange!7!white,colframe=orange!75!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{conceptbox}[1][]{
+  colback=blue!4!white,colframe=blue!60!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{methodbox}[1][]{
+  colback=green!4!white,colframe=green!55!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{warnbox}[1][]{
+  colback=red!4!white,colframe=red!60!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{examplebox}[1][]{
+  colback=cyan!3!white,colframe=cyan!55!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{proofbox}[1][]{
+  colback=violet!3!white,colframe=violet!55!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+
+\title{\textbf{Statistical Modelling and Inference}\\[0.3em]
+2026 期末复习讲义}
+\author{依据黑板考试范围、课程讲义、课件、样卷与教师录音确认整理}
+\date{June 2026}
+
+\begin{document}
+\maketitle
+
+\begin{scopebox}[考试范围说明]
+\textbf{本讲义纳入：}
+\begin{enumerate}
+  \item 无偏估计（unbiased estimation）与均方误差（MSE）；
+  \item 估计与假设检验：单总体均值、两总体均值、总体方差未知时的均值推断、总体比例；
+  \item 回归建模：简单线性回归、多元线性回归、最小二乘估计、残差及其性质；
+  \item MLE 的推断：正态、二项、泊松、指数分布，包括 Fisher 信息与大样本近似推断。
+\end{enumerate}
+
+\textbf{明确排除：}ANOVA、R 编程、P-value、Power、Polynomial regression、nested-model comparison。
+
+\textbf{教师录音确认：}期末共 5 道大题，每题可拆成若干小问；没有固定“几道证明、几道计算”的比例，但整体更偏 derivation/proof。Simple linear regression 仍需准备手算与基础推导；multiple linear regression 重点是理论推导与证明，不考给出大数据集后的繁重手算；polynomial regression 不纳入期末。
+
+\textbf{第三张黑板图说明：}图中在 ``Unknown Variance'' 附近补写了两个统计量，但板书细节尚未由教师确认。本讲义当前按照课程材料中明确出现的内容，将 ``Unknown Variance'' 解释为“总体方差未知时，使用 $t$ 分布进行单总体或两总体均值推断”。不把尚未确认的板书解释当作考试结论。
+\end{scopebox}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{全课程主线与做题决策}
+% ============================================================
+
+\subsection{从样本到结论}
+
+统计推断的主线是
+\[
+  \text{总体参数未知}
+  \quad \xleftarrow{\ \text{利用抽样分布}\ }\quad
+  \text{样本统计量已观测}.
+\]
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+研究对象 & 总体参数（固定但未知） & 样本统计量（随样本变化）\\
+\midrule
+均值 & $\mu$ & $\bar X$\\
+方差 & $\sigma^2$ & $S^2$\\
+总体比例 & $p$ & $\hat p=X/n$\\
+回归系数 & $\beta_j$ & $\hat\beta_j$\\
+一般模型参数 & $\theta$ & $\hat\theta_{\mathrm{MLE}}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{conceptbox}[Estimator 与 Estimate]
+\textbf{估计量（estimator）}是样本的函数，如
+\[
+  \hat\theta=g(X_1,\ldots,X_n),
+\]
+因此在抽样之前是随机变量。\textbf{估计值（estimate）}是观察数据后代入得到的具体数值。证明无偏性、计算方差和 MSE 时讨论的是估计量；报告数据结果时给出的是估计值。
+\end{conceptbox}
+
+\subsection{推断方法选择总表}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{p{2.4cm}p{3.5cm}p{3.6cm}X}
+\toprule
+目标参数 & 情形 & 核心标准误 & 参考分布\\
+\midrule
+$\mu$ & $\sigma$ 已知，或明确要求大样本正态近似
+& $\sigma/\sqrt n$（大样本可按题意用 $s/\sqrt n$）
+& 标准正态 $Z$\\
+$\mu$ & $\sigma$ 未知且总体正态
+& $s/\sqrt n$
+& $t_{n-1}$\\
+$\mu_1-\mu_2$ & 独立、大样本
+& $\sqrt{s_1^2/n_1+s_2^2/n_2}$
+& 标准正态 $Z$\\
+$\mu_1-\mu_2$ & 独立、小样本、正态、等方差
+& $s_p\sqrt{1/n_1+1/n_2}$
+& $t_{n_1+n_2-2}$\\
+$\mu_1-\mu_2$ & 独立、小样本、正态、不假设等方差
+& $\sqrt{s_1^2/n_1+s_2^2/n_2}$
+& Welch $t_\nu$\\
+$\mu_d$ & 配对样本
+& $s_d/\sqrt n$
+& $t_{n-1}$\\
+$p$ & 单总体比例、大样本
+& CI 用 $\sqrt{\hat p(1-\hat p)/n}$；检验用 $\sqrt{p_0(1-p_0)/n}$
+& 标准正态 $Z$\\
+$p_1-p_2$ & 两独立比例、大样本
+& CI 不合并；检验 $H_0:p_1=p_2$ 时合并
+& 标准正态 $Z$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{methodbox}[任何 CI / 检验题的第一分钟]
+\begin{enumerate}
+  \item 写清楚\textbf{参数}：究竟是 $\mu$、$\mu_1-\mu_2$、$\mu_d$、$p$ 还是 $p_1-p_2$。
+  \item 判断\textbf{设计}：单样本、两个独立样本，还是配对样本。
+  \item 判断\textbf{标准误与参考分布}：$Z$ 还是 $t$；方差是否未知；两样本是否等方差。
+  \item 检查\textbf{假设条件}：随机性、独立性、正态性或大样本近似。
+  \item 再代公式，最后用题目语境解释。
+\end{enumerate}
+\end{methodbox}
+
+% ============================================================
+\section{无偏估计、偏差与均方误差}
+% ============================================================
+
+\subsection{定义与基本性质}
+
+\begin{memorybox}[必须记忆：Bias 与 MSE]
+设 $\hat\theta$ 估计参数 $\theta$：
+\[
+  \boxed{\Bias(\hat\theta)=\E(\hat\theta)-\theta.}
+\]
+若 $\E(\hat\theta)=\theta$，则称 $\hat\theta$ 是 $\theta$ 的\textbf{无偏估计量}。
+\[
+  \boxed{\MSE(\hat\theta)=\E\bigl[(\hat\theta-\theta)^2\bigr].}
+\]
+\end{memorybox}
+
+常用运算规则：
+\begin{align*}
+  \E(aX+b)&=a\E(X)+b,\\
+  \Var(aX+b)&=a^2\Var(X),\\
+  \Var(aX+bY)&=a^2\Var(X)+b^2\Var(Y)+2ab\Cov(X,Y).
+\end{align*}
+独立蕴含协方差为零，但协方差为零一般不蕴含独立。
+
+\subsection{偏差--方差分解}
+
+\begin{memorybox}[必须记忆：MSE 分解]
+\[
+  \boxed{
+  \MSE(\hat\theta)
+  =
+  \Var(\hat\theta)+\bigl[\Bias(\hat\theta)\bigr]^2.
+  }
+\]
+若 $\hat\theta$ 无偏，则 $\MSE(\hat\theta)=\Var(\hat\theta)$。
+\end{memorybox}
+
+\begin{proofbox}[完整证明]
+把估计误差拆成随机波动与系统偏差：
+\[
+  \hat\theta-\theta
+  =
+  \bigl[\hat\theta-\E(\hat\theta)\bigr]
+  +
+  \bigl[\E(\hat\theta)-\theta\bigr].
+\]
+令 $B=\Bias(\hat\theta)=\E(\hat\theta)-\theta$，平方并取期望：
+\begin{align*}
+  \E[(\hat\theta-\theta)^2]
+  &=
+  \E\left[
+  \bigl(\hat\theta-\E\hat\theta\bigr)^2
+  +2B\bigl(\hat\theta-\E\hat\theta\bigr)
+  +B^2
+  \right]\\
+  &=
+  \Var(\hat\theta)
+  +2B\,\underbrace{\E[\hat\theta-\E(\hat\theta)]}_{0}
+  +B^2\\
+  &=\Var(\hat\theta)+B^2.
+\end{align*}
+\end{proofbox}
+
+\begin{conceptbox}[为什么 MSE 比“是否无偏”更全面]
+无偏只说明长期平均位置正确，不保证每次估计都靠近真值。MSE 同时惩罚方差和偏差，因此一个轻微有偏但方差显著更小的估计量，可能比无偏估计量具有更小的 MSE。
+\end{conceptbox}
+
+\subsection{构造无偏估计量}
+
+若
+\[
+  \E(\hat\theta)=a\theta+b,\qquad a\ne 0,
+\]
+则
+\[
+  \boxed{\hat\theta^*=\frac{\hat\theta-b}{a}}
+\]
+是无偏估计量，因为
+\[
+  \E(\hat\theta^*)=\frac{a\theta+b-b}{a}=\theta.
+\]
+
+\begin{examplebox}[样卷型：缩放后的样本均值]
+设 $X_1,\ldots,X_n$ 的均值为 $\mu$、方差为 $\sigma^2$，并定义
+\[
+  T=\frac{n-1}{n}\bar X.
+\]
+则
+\[
+  \E(T)=\frac{n-1}{n}\mu,
+  \qquad
+  \Bias(T)=-\frac{\mu}{n},
+\]
+\[
+  \Var(T)
+  =
+  \left(\frac{n-1}{n}\right)^2\frac{\sigma^2}{n}
+  =
+  \frac{(n-1)^2\sigma^2}{n^3},
+\]
+\[
+  \MSE(T)
+  =
+  \frac{(n-1)^2\sigma^2}{n^3}
+  +
+  \frac{\mu^2}{n^2}.
+\]
+若令 $T^*=aT$ 并要求无偏，则
+\[
+  a\frac{n-1}{n}\mu=\mu
+  \quad\Longrightarrow\quad
+  a=\frac{n}{n-1},
+\]
+所以 $T^*=\bar X$。
+\end{examplebox}
+
+\subsection{合并两个无偏估计量}
+
+设 $\hat\theta_1,\hat\theta_2$ 都无偏，定义
+\[
+  \hat\theta_a=a\hat\theta_1+(1-a)\hat\theta_2.
+\]
+由于权重和为 1，
+\[
+  \E(\hat\theta_a)=a\theta+(1-a)\theta=\theta.
+\]
+所以任意固定 $a$ 都保持无偏。
+
+若
+\[
+  \Var(\hat\theta_1)=v_1,\quad
+  \Var(\hat\theta_2)=v_2,\quad
+  \Cov(\hat\theta_1,\hat\theta_2)=c,
+\]
+则
+\[
+  \Var(\hat\theta_a)
+  =
+  a^2v_1+(1-a)^2v_2+2a(1-a)c.
+\]
+因为无偏，最小化 MSE 等价于最小化方差。求导可得
+\[
+  \boxed{
+  a^*=\frac{v_2-c}{v_1+v_2-2c}.
+  }
+\]
+独立时 $c=0$：
+\[
+  \boxed{
+  a^*=\frac{v_2}{v_1+v_2},
+  \qquad
+  1-a^*=\frac{v_1}{v_1+v_2}.
+  }
+\]
+方差较小的估计量得到更大的权重。
+
+\subsection{样本均值与样本方差}
+
+若 $X_1,\ldots,X_n$ 独立同分布，$\E(X_i)=\mu$，$\Var(X_i)=\sigma^2$，则
+\[
+  \boxed{\E(\bar X)=\mu,\qquad \Var(\bar X)=\frac{\sigma^2}{n}.}
+\]
+
+定义
+\[
+  S_n^2=\frac{1}{n}\sum_{i=1}^n(X_i-\bar X)^2,
+  \qquad
+  S^2=\frac{1}{n-1}\sum_{i=1}^n(X_i-\bar X)^2.
+\]
+利用恒等式
+\[
+  \sum_{i=1}^n(X_i-\bar X)^2
+  =
+  \sum_{i=1}^n(X_i-\mu)^2-n(\bar X-\mu)^2,
+\]
+取期望：
+\[
+  \E\left[\sum_{i=1}^n(X_i-\bar X)^2\right]
+  =
+  n\sigma^2-n\frac{\sigma^2}{n}
+  =
+  (n-1)\sigma^2.
+\]
+因此
+\[
+  \boxed{\E(S_n^2)=\frac{n-1}{n}\sigma^2,\qquad \E(S^2)=\sigma^2.}
+\]
+
+\begin{warnbox}[常见陷阱]
+\begin{itemize}
+  \item 无偏样本方差用分母 $n-1$；正态方差的 MLE 通常用分母 $n$。
+  \item $S^2$ 对 $\sigma^2$ 无偏，并不意味着 $S$ 对 $\sigma$ 无偏。
+  \item 比较估计量不能只比较偏差；题目问“更好”时优先比较 MSE。
+\end{itemize}
+\end{warnbox}
+
+% ============================================================
+\section{Estimation 与 Testing 的统一框架}
+% ============================================================
+
+\subsection{点估计、区间估计与假设检验}
+
+\textbf{点估计}给一个最合理的数值；\textbf{置信区间（CI）}给出与数据相容的一段参数范围；\textbf{假设检验}考察某个指定参数值是否与数据相容。
+
+大多数双侧 CI 都具有结构
+\[
+  \boxed{
+  \text{point estimate}
+  \ \pm\
+  \text{critical value}\times \text{standard error}.
+  }
+\]
+
+\begin{conceptbox}[置信水平的正确解释]
+一个具体算出的 95\% CI 要么覆盖真参数，要么不覆盖；在频率学派中参数不是随机的。95\% 的含义是：若无限次重复抽样并用同一方法构造区间，约 95\% 的区间会覆盖真参数。
+\end{conceptbox}
+
+\subsection{假设检验的结构}
+
+原假设必须包含参数空间中的\textbf{边界值}，可以是简单原假设
+\[
+  H_0:\theta=\theta_0.
+\]
+也可以是单侧复合原假设，例如
+\[
+  H_0:\theta\leq\theta_0
+  \quad\text{vs.}\quad
+  H_a:\theta>\theta_0.
+\]
+在后一种情形中，临界值法通常在原假设边界 $\theta=\theta_0$ 处计算检验统计量的参考分布。不能只因为观测估计值落在备择方向，就直接拒绝原假设。
+
+备择假设决定尾部方向：
+\[
+  H_a:\theta>\theta_0,\qquad
+  H_a:\theta<\theta_0,\qquad
+  H_a:\theta\ne\theta_0.
+\]
+
+标准化统计量的基本结构是
+\[
+  \boxed{
+  \text{test statistic}
+  =
+  \frac{\text{estimate}-\text{null value}}{\text{standard error under }H_0}.
+  }
+\]
+它衡量观测估计值距离原假设值有多少个标准误。
+
+\begin{conceptbox}[第一类错误与第二类错误]
+\begin{itemize}
+  \item \textbf{第一类错误（Type I error）}：$H_0$ 真实却拒绝 $H_0$。检验设计使其概率不超过显著性水平 $\alpha$；在边界处通常等于 $\alpha$。
+  \item \textbf{第二类错误（Type II error）}：$H_0$ 错误却不能拒绝 $H_0$。其概率通常记为 $\beta$，会随真实参数值、样本量和拒绝域变化。
+\end{itemize}
+“不能拒绝 $H_0$”不等于证明 $H_0$ 为真；它只表示现有样本没有提供足够强的反对证据。
+\end{conceptbox}
+
+\begin{memorybox}[临界值法：本讲义唯一采用的检验决策方法]
+若检验统计量在 $H_0$ 下服从标准正态：
+\[
+\begin{array}{lll}
+H_a:\theta>\theta_0 &\Rightarrow& Z_{\mathrm{obs}}>z_\alpha\ \text{时拒绝 }H_0,\\
+H_a:\theta<\theta_0 &\Rightarrow& Z_{\mathrm{obs}}<-z_\alpha\ \text{时拒绝 }H_0,\\
+H_a:\theta\ne\theta_0 &\Rightarrow& |Z_{\mathrm{obs}}|>z_{\alpha/2}\ \text{时拒绝 }H_0.
+\end{array}
+\]
+$t$ 检验将 $z$ 临界值替换为相应自由度的 $t$ 临界值。
+\end{memorybox}
+
+\begin{center}
+\begin{tabular}{cccc}
+\toprule
+置信水平 & $\alpha$ & 双侧临界值 $z_{\alpha/2}$ & 单侧临界值 $z_\alpha$\\
+\midrule
+90\% & 0.10 & 1.645 & 1.282\\
+95\% & 0.05 & 1.960 & 1.645\\
+99\% & 0.01 & 2.576 & 2.326\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{methodbox}[假设检验标准答题模板]
+\begin{enumerate}
+  \item 定义参数，并写出 $H_0$ 与 $H_a$；
+  \item 写出显著性水平 $\alpha$；
+  \item 说明适用条件与所用参考分布；
+  \item 写公式并计算观测检验统计量；
+  \item 写出临界值和拒绝域；
+  \item 比较并作出“拒绝 $H_0$”或“不能拒绝 $H_0$”的决定；
+  \item 用题目语境写结论，不写“接受 $H_0$”。
+\end{enumerate}
+\end{methodbox}
+
+\subsection{CI 与双侧检验的关系}
+
+在使用同一标准误与同一参考分布时，显著性水平为 $\alpha$ 的双侧检验
+\[
+  H_0:\theta=\theta_0
+  \quad\text{vs.}\quad
+  H_a:\theta\ne\theta_0
+\]
+与 $(1-\alpha)100\%$ CI 具有如下对应关系：
+\[
+  \boxed{
+  \theta_0\notin \text{CI}
+  \Longleftrightarrow
+  \text{拒绝 }H_0.
+  }
+\]
+
+% ============================================================
+\section{单总体均值：已知与未知方差}
+% ============================================================
+
+\subsection{抽样分布}
+
+若 $X_1,\ldots,X_n$ 独立同分布，均值为 $\mu$、方差为 $\sigma^2$：
+\[
+  \E(\bar X)=\mu,\qquad
+  \SE(\bar X)=\frac{\sigma}{\sqrt n}.
+\]
+若总体正态，则 $\bar X$ 精确正态；若总体不正态但样本量足够大，则由中心极限定理近似正态。
+
+\subsection{\texorpdfstring{总体标准差已知：$Z$ 推断}{总体标准差已知：Z 推断}}
+
+\begin{memorybox}[单总体均值：$\sigma$ 已知]
+\[
+  Z=\frac{\bar X-\mu}{\sigma/\sqrt n}\sim N(0,1).
+\]
+$(1-\alpha)100\%$ CI：
+\[
+  \boxed{\bar x\pm z_{\alpha/2}\frac{\sigma}{\sqrt n}.}
+\]
+检验 $H_0:\mu=\mu_0$：
+\[
+  \boxed{Z_{\mathrm{obs}}=\frac{\bar x-\mu_0}{\sigma/\sqrt n}.}
+\]
+\end{memorybox}
+
+\begin{examplebox}[单均值 $Z$ 区间与检验]
+已知 $n=64,\bar x=33,\sigma=16$。95\% CI 为
+\[
+  33\pm1.96\frac{16}{8}
+  =
+  33\pm3.92
+  =
+  (29.08,36.92).
+\]
+检验 $H_0:\mu=30$ 对 $H_a:\mu>30$，$\alpha=0.05$：
+\[
+  Z_{\mathrm{obs}}=\frac{33-30}{16/\sqrt{64}}=1.50.
+\]
+右尾临界值为 $z_{0.05}=1.645$。因为 $1.50<1.645$，不能拒绝 $H_0$；数据不足以支持总体平均购物时间超过 30 分钟。
+\end{examplebox}
+
+\subsection{\texorpdfstring{总体方差未知：$t$ 推断}{总体方差未知：t 推断}}
+
+当 $\sigma$ 未知，用样本标准差 $S$ 替代。若总体正态，则
+\[
+  \boxed{
+  T=\frac{\bar X-\mu}{S/\sqrt n}\sim t_{n-1}.
+  }
+\]
+$t$ 分布比标准正态尾部更厚，反映了用 $S$ 估计 $\sigma$ 带来的额外不确定性；自由度增加时，$t$ 分布趋近标准正态。
+
+\begin{memorybox}[单总体均值：$\sigma$ 未知]
+$(1-\alpha)100\%$ CI：
+\[
+  \boxed{\bar x\pm t_{\alpha/2,n-1}\frac{s}{\sqrt n}.}
+\]
+检验 $H_0:\mu=\mu_0$：
+\[
+  \boxed{
+  t_{\mathrm{obs}}
+  =
+  \frac{\bar x-\mu_0}{s/\sqrt n},
+  \qquad \nu=n-1.
+  }
+\]
+\end{memorybox}
+
+\begin{examplebox}[单均值 $t$ 区间]
+某总体近似正态，$n=24,\bar x=98.25,s=0.73$。若
+$t_{0.05,23}=1.714$，则 90\% CI 为
+\[
+  98.25\pm1.714\frac{0.73}{\sqrt{24}}
+  =
+  98.25\pm0.255
+  =
+  (97.995,98.505).
+\]
+\end{examplebox}
+
+\begin{warnbox}[Unknown Variance 的关键含义]
+\begin{itemize}
+  \item “方差未知”不意味着不能推断；它意味着用 $S$ 替代 $\sigma$，并使用 $t$ 参考分布。
+  \item 小样本 $t$ 推断要求总体近似正态；样本量很大时方法对轻度非正态更稳健。
+  \item 自由度是 $n-1$，因为样本方差计算中先估计了一个均值。
+\end{itemize}
+\end{warnbox}
+
+% ============================================================
+\section{两总体均值的估计与检验}
+% ============================================================
+
+\subsection{先判断：独立还是配对}
+
+\begin{conceptbox}[独立样本 vs 配对样本]
+\textbf{独立样本：}两组由不同个体组成，例如治疗组与对照组。\\
+\textbf{配对样本：}同一个体前后测量，或按特征一一匹配。配对设计的分析单位是差值
+\[
+  D_i=X_{1i}-X_{2i},
+\]
+因此本质上是对差值做单样本推断。
+\end{conceptbox}
+
+\subsection{两个独立大样本}
+
+若两组独立且样本量足够大，
+\[
+  \SE(\bar X_1-\bar X_2)
+  =
+  \sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}.
+\]
+
+\begin{memorybox}[两个独立大样本均值]
+$(1-\alpha)100\%$ CI：
+\[
+  \boxed{
+  (\bar x_1-\bar x_2)
+  \pm
+  z_{\alpha/2}
+  \sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}.
+  }
+\]
+检验 $H_0:\mu_1-\mu_2=\Delta_0$：
+\[
+  \boxed{
+  Z_{\mathrm{obs}}
+  =
+  \frac{(\bar x_1-\bar x_2)-\Delta_0}
+  {\sqrt{s_1^2/n_1+s_2^2/n_2}}.
+  }
+\]
+\end{memorybox}
+
+\begin{examplebox}[两个独立大样本]
+组 A：$n_1=36,\bar x_1=18.4,s_1=4.8$；组 B：
+$n_2=49,\bar x_2=15.9,s_2=5.6$。
+\[
+  \widehat{\mu_A-\mu_B}=2.5,
+\]
+\[
+  \SE
+  =
+  \sqrt{\frac{4.8^2}{36}+\frac{5.6^2}{49}}
+  =
+  \sqrt{0.64+0.64}
+  =
+  1.131.
+\]
+95\% CI：
+\[
+  2.5\pm1.96(1.131)
+  =
+  (0.283,4.717).
+\]
+检验 $H_0:\mu_A-\mu_B=0$ 对 $H_a:\mu_A-\mu_B>0$：
+\[
+  Z_{\mathrm{obs}}=\frac{2.5}{1.131}=2.21>1.645.
+\]
+拒绝 $H_0$；数据支持组 A 的总体平均学习时间更长。
+\end{examplebox}
+
+\subsection{\texorpdfstring{小样本、正态、等方差：Pooled $t$}{小样本、正态、等方差：Pooled t}}
+
+若两个总体正态、相互独立，并可假设
+\[
+  \sigma_1^2=\sigma_2^2=\sigma^2,
+\]
+则把两个样本方差按自由度加权合并：
+\[
+  \boxed{
+  s_p^2
+  =
+  \frac{(n_1-1)s_1^2+(n_2-1)s_2^2}{n_1+n_2-2}.
+  }
+\]
+
+\begin{memorybox}[两个独立小样本：等方差]
+\[
+  \boxed{
+  t_{\mathrm{obs}}
+  =
+  \frac{(\bar x_1-\bar x_2)-\Delta_0}
+  {s_p\sqrt{1/n_1+1/n_2}},
+  \qquad
+  \nu=n_1+n_2-2.
+  }
+\]
+\[
+  \boxed{
+  (\bar x_1-\bar x_2)
+  \pm
+  t_{\alpha/2,\nu}
+  s_p\sqrt{\frac1{n_1}+\frac1{n_2}}.
+  }
+\]
+\end{memorybox}
+
+\subsection{\texorpdfstring{扩展：小样本、不假设等方差的 Welch $t$}{扩展：小样本、不假设等方差的 Welch t}}
+
+Welch 推断是处理两个独立小样本且不假设等方差的常用方法，但课程材料主要强调 pooled $t$。若试题未要求 Welch，先依据题目给出的假设与课堂约定选法。Welch 方法为：
+\[
+  \SE
+  =
+  \sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}},
+\qquad
+  t_{\mathrm{obs}}
+  =
+  \frac{(\bar x_1-\bar x_2)-\Delta_0}{\SE}.
+\]
+近似自由度为
+\[
+  \boxed{
+  \nu
+  \approx
+  \frac{\left(s_1^2/n_1+s_2^2/n_2\right)^2}
+  {\dfrac{(s_1^2/n_1)^2}{n_1-1}
+  +
+  \dfrac{(s_2^2/n_2)^2}{n_2-1}}.
+  }
+\]
+若试题明确要求 pooled $t$ 或明确给出等方差，则使用上一节方法。
+
+\subsection{配对样本}
+
+定义差值
+\[
+  D_i=X_{1i}-X_{2i},
+\qquad i=1,\ldots,n.
+\]
+计算差值样本均值 $\bar d$ 与标准差 $s_d$，再做单总体 $t$ 推断。
+
+\begin{memorybox}[配对 $t$ 推断]
+\[
+  \boxed{
+  t_{\mathrm{obs}}
+  =
+  \frac{\bar d-\Delta_0}{s_d/\sqrt n},
+  \qquad \nu=n-1.
+  }
+\]
+\[
+  \boxed{
+  \bar d\pm t_{\alpha/2,n-1}\frac{s_d}{\sqrt n}.
+  }
+\]
+\end{memorybox}
+
+\begin{warnbox}[两总体均值高频错误]
+\begin{itemize}
+  \item 配对数据不能当成两个独立样本；必须先求每一对的差值。
+  \item 独立大样本标准误不能写成 $s_1/\sqrt{n_1}+s_2/\sqrt{n_2}$；方差先相加，再开方。
+  \item Pooled $t$ 需要等方差假设；Welch $t$ 不合并方差。
+  \item 参数顺序必须与样本差的顺序一致。例如估计 $\mu_A-\mu_B$ 就应计算 $\bar x_A-\bar x_B$。
+\end{itemize}
+\end{warnbox}
+
+% ============================================================
+\section{总体比例的估计与检验}
+% ============================================================
+
+\subsection{单总体比例}
+
+若 $X$ 是 $n$ 次独立 Bernoulli 试验中的成功次数，则
+\[
+  X\sim\operatorname{Binomial}(n,p),
+  \qquad
+  \hat p=\frac{X}{n}.
+\]
+\[
+  \E(\hat p)=p,\qquad
+  \Var(\hat p)=\frac{p(1-p)}{n}.
+\]
+
+\begin{memorybox}[单总体比例：CI 与检验分母不同]
+CI 使用样本比例估计标准误：
+\[
+  \boxed{
+  \hat p
+  \pm
+  z_{\alpha/2}
+  \sqrt{\frac{\hat p(1-\hat p)}{n}}.
+  }
+\]
+检验 $H_0:p=p_0$ 时，标准误在 $H_0$ 下计算：
+\[
+  \boxed{
+  Z_{\mathrm{obs}}
+  =
+  \frac{\hat p-p_0}
+  {\sqrt{p_0(1-p_0)/n}}.
+  }
+\]
+\end{memorybox}
+
+正态近似通常要求成功与失败的期望次数都足够大。常用检查为
+\[
+  n\hat p\ge 5,\quad n(1-\hat p)\ge 5
+\]
+用于 CI；检验时用 $np_0$ 与 $n(1-p_0)$ 检查。
+
+\begin{examplebox}[单总体比例]
+在 $n=400$ 人中有 $x=100$ 人具有某特征，因此 $\hat p=0.25$。
+检验 $H_0:p=0.20$ 对 $H_a:p\ne0.20$，$\alpha=0.05$：
+\[
+  Z_{\mathrm{obs}}
+  =
+  \frac{0.25-0.20}{\sqrt{0.20(0.80)/400}}
+  =
+  \frac{0.05}{0.02}
+  =
+  2.50.
+\]
+因为 $|2.50|>1.96$，拒绝 $H_0$；数据支持总体比例不同于 20\%。
+\end{examplebox}
+
+\subsection{两个独立总体比例}
+
+设
+\[
+  \hat p_1=\frac{x_1}{n_1},
+  \qquad
+  \hat p_2=\frac{x_2}{n_2}.
+\]
+
+\begin{memorybox}[两总体比例：CI 不合并]
+\[
+  \boxed{
+  (\hat p_1-\hat p_2)
+  \pm
+  z_{\alpha/2}
+  \sqrt{
+  \frac{\hat p_1(1-\hat p_1)}{n_1}
+  +
+  \frac{\hat p_2(1-\hat p_2)}{n_2}
+  }.
+  }
+\]
+\end{memorybox}
+
+检验
+\[
+  H_0:p_1=p_2
+\]
+时，原假设认为两组共享同一个比例，因此先计算合并比例
+\[
+  \hat p_{\mathrm{pool}}
+  =
+  \frac{x_1+x_2}{n_1+n_2},
+\]
+再使用
+\[
+  \boxed{
+  Z_{\mathrm{obs}}
+  =
+  \frac{\hat p_1-\hat p_2}
+  {\sqrt{
+  \hat p_{\mathrm{pool}}(1-\hat p_{\mathrm{pool}})
+  \left(1/n_1+1/n_2\right)
+  }}.
+  }
+\]
+
+\begin{warnbox}[比例推断最常见陷阱]
+\begin{itemize}
+  \item 单比例 CI 分母用 $\hat p$，单比例检验分母用 $p_0$。
+  \item 两比例 CI 不合并；检验 $H_0:p_1=p_2$ 时才合并。
+  \item 两比例 CI 的第二项必须是
+  $\hat p_2(1-\hat p_2)/n_2$；原课程 PDF 的该处存在下标笔误。
+  \item 区间端点若超出 $[0,1]$，说明简单正态近似可能不理想。
+\end{itemize}
+\end{warnbox}
+
+% ============================================================
+\section{回归建模总览}
+% ============================================================
+
+\subsection{回归的目标}
+
+回归分析用于描述和预测响应变量 $Y$ 如何随预测变量变化。必须区分：
+\[
+  \text{条件均值 } \E(Y\mid X=x)
+  \quad\text{与}\quad
+  \text{单个观测 }Y.
+\]
+即使条件均值是一条确定的曲线，单个观测仍因误差项而随机波动。
+
+\subsection{误差假设}
+
+简单线性回归的总体模型为
+\[
+  Y_i=\beta_0+\beta_1x_i+\varepsilon_i.
+\]
+经典假设可写为：
+\[
+  \E(\varepsilon_i\mid x_i)=0,
+  \qquad
+  \Var(\varepsilon_i\mid x_i)=\sigma^2,
+  \qquad
+  \varepsilon_i\ind\varepsilon_j\ (i\ne j).
+\]
+若还假定
+\[
+  \varepsilon_i\sim N(0,\sigma^2),
+\]
+则可得到精确的小样本 $t$ 推断。正态性主要服务于推断，不是最小二乘系数存在的必要条件。
+
+\begin{conceptbox}[模型假设与残差图]
+\begin{itemize}
+  \item 线性或函数形式合理：残差对拟合值图不应出现系统曲线。
+  \item 同方差：残差散布宽度应大致恒定，不应呈漏斗形。
+  \item 独立：依赖研究设计与时间顺序，不能只靠普通散点图保证。
+  \item 正态性：误差应近似正态；残差只能作为误差的观测代理。
+\end{itemize}
+\end{conceptbox}
+
+% ============================================================
+\section{简单线性回归与最小二乘估计}
+% ============================================================
+
+\subsection{模型与系数解释}
+
+\[
+  Y_i=\beta_0+\beta_1x_i+\varepsilon_i,
+  \qquad
+  \E(Y_i\mid x_i)=\beta_0+\beta_1x_i.
+\]
+\begin{itemize}
+  \item $\beta_0$：$x=0$ 时的总体平均响应；若 $0$ 不在数据合理范围内，它可能只具有数学意义。
+  \item $\beta_1$：$x$ 每增加一个单位，条件均值平均变化 $\beta_1$ 个单位。
+\end{itemize}
+
+\subsection{最小二乘准则与正规方程}
+
+拟合直线
+\[
+  \hat y_i=b_0+b_1x_i
+\]
+使残差平方和最小：
+\[
+  SSE(b_0,b_1)
+  =
+  \sum_{i=1}^n(y_i-b_0-b_1x_i)^2.
+\]
+对 $b_0,b_1$ 求偏导并令其为零：
+\[
+  \frac{\partial SSE}{\partial b_0}
+  =
+  -2\sum_{i=1}^n(y_i-b_0-b_1x_i)=0,
+\]
+\[
+  \frac{\partial SSE}{\partial b_1}
+  =
+  -2\sum_{i=1}^nx_i(y_i-b_0-b_1x_i)=0.
+\]
+这给出正规方程，也立刻给出残差的两个正交性质：
+\[
+  \sum e_i=0,
+  \qquad
+  \sum x_ie_i=0.
+\]
+
+定义
+\[
+  S_{xx}=\sum_{i=1}^n(x_i-\bar x)^2,
+\quad
+  S_{xy}=\sum_{i=1}^n(x_i-\bar x)(y_i-\bar y),
+\quad
+  S_{yy}=\sum_{i=1}^n(y_i-\bar y)^2.
+\]
+
+\begin{memorybox}[简单线性回归 OLS]
+\[
+  \boxed{\hat\beta_1=b_1=\frac{S_{xy}}{S_{xx}}.}
+\]
+\[
+  \boxed{\hat\beta_0=b_0=\bar y-b_1\bar x.}
+\]
+\[
+  \boxed{\hat y=b_0+b_1x.}
+\]
+\end{memorybox}
+
+\subsection{最小二乘直线的几何性质}
+
+\begin{itemize}
+  \item 拟合直线必经过 $(\bar x,\bar y)$：
+  \[
+    b_0+b_1\bar x=\bar y.
+  \]
+  \item 若模型含截距，残差均值为零：
+  \[
+    \bar e=0.
+  \]
+  \item 残差与预测变量正交：
+  \[
+    \sum x_ie_i=0.
+  \]
+  \item 残差与拟合值正交：
+  \[
+    \sum \hat y_ie_i=0.
+  \]
+\end{itemize}
+
+\subsection{平方和与误差方差}
+
+\[
+  SST=S_{yy}=\sum(y_i-\bar y)^2,
+\]
+\[
+  SSE=\sum(y_i-\hat y_i)^2
+  =
+  S_{yy}-\frac{S_{xy}^2}{S_{xx}}
+  =
+  S_{yy}-\hat\beta_1S_{xy}.
+\]
+简单线性回归估计了两个系数，故误差方差的无偏估计为
+\[
+  \boxed{
+  s_e^2=\frac{SSE}{n-2},
+  \qquad
+  s_e=\sqrt{\frac{SSE}{n-2}}.
+  }
+\]
+
+\subsection{平方和分解、相关系数与决定系数}
+
+在含截距的简单线性回归中，总变异可分解为模型解释的变异与未解释的残差变异：
+\[
+  \boxed{
+  SST=SSR+SSE,
+  }
+\]
+其中
+\[
+  SST=\sum_{i=1}^n(y_i-\bar y)^2,
+  \qquad
+  SSR=\sum_{i=1}^n(\hat y_i-\bar y)^2,
+  \qquad
+  SSE=\sum_{i=1}^n(y_i-\hat y_i)^2.
+\]
+决定系数为
+\[
+  \boxed{
+  R^2=\frac{SSR}{SST}=1-\frac{SSE}{SST}.
+  }
+\]
+$R^2$ 表示样本中 $Y$ 的总变异有多大比例被拟合模型解释。它不证明因果关系，也不能单独保证模型形式正确。
+
+样本相关系数为
+\[
+  \boxed{
+  r
+  =
+  \frac{S_{xy}}{\sqrt{S_{xx}S_{yy}}},
+  \qquad -1\le r\le1.
+  }
+\]
+在\textbf{含截距的简单线性回归}中，
+\[
+  \boxed{R^2=r^2.}
+\]
+但在多元回归中，不再有某一个简单相关系数满足该等式。
+
+\subsection{Week 9：OLS 估计量性质的标量证明}
+
+令
+\[
+  a_i=\frac{x_i-\bar x}{S_{xx}},
+\qquad
+  \hat\beta_1=\sum_{i=1}^na_iY_i.
+\]
+又因为
+\[
+  \hat\beta_0=\bar Y-\bar x\hat\beta_1,
+\]
+可写成
+\[
+  \hat\beta_0=\sum_{i=1}^nb_iY_i,
+  \qquad
+  b_i=\frac1n-\bar x a_i.
+\]
+权重满足
+\[
+  \sum a_i=0,
+  \qquad
+  \sum a_ix_i=1,
+  \qquad
+  \sum a_i^2=\frac1{S_{xx}}.
+\]
+同时
+\[
+  \sum b_i=1,
+  \qquad
+  \sum b_ix_i=0,
+\]
+\[
+  \sum b_i^2=\frac1n+\frac{\bar x^2}{S_{xx}},
+  \qquad
+  \sum a_ib_i=-\frac{\bar x}{S_{xx}}.
+\]
+
+\begin{conceptbox}[老师手写证明的入口]
+手写备课笔记的核心技巧是把估计量写成 $Y_i$ 的线性组合：
+\[
+  \hat\beta_1=\sum a_iY_i,
+  \qquad
+  \hat\beta_0=\sum b_iY_i.
+\]
+之后所有期望、方差和协方差证明，都只是在使用
+\[
+  \E(Y_i)=\beta_0+\beta_1x_i,\qquad
+  \Var(Y_i)=\sigma^2,\qquad
+  Y_i\text{ 相互独立}.
+\]
+\end{conceptbox}
+
+\begin{proofbox}[$\hat\beta_1$ 无偏性的完整证明]
+\begin{align*}
+  \E(\hat\beta_1)
+  &=
+  \sum_{i=1}^na_i\E(Y_i)\\
+  &=
+  \sum_{i=1}^na_i(\beta_0+\beta_1x_i)\\
+  &=
+  \beta_0\sum_{i=1}^na_i
+  +
+  \beta_1\sum_{i=1}^na_ix_i\\
+  &=0+\beta_1=\beta_1.
+\end{align*}
+\end{proofbox}
+
+\begin{proofbox}[$\hat\beta_0$ 无偏性的完整证明]
+\begin{align*}
+  \E(\hat\beta_0)
+  &=
+  \sum_{i=1}^nb_i\E(Y_i)\\
+  &=
+  \sum_{i=1}^nb_i(\beta_0+\beta_1x_i)\\
+  &=
+  \beta_0\sum_{i=1}^nb_i
+  +
+  \beta_1\sum_{i=1}^nb_ix_i\\
+  &=\beta_0+0=\beta_0.
+\end{align*}
+\end{proofbox}
+
+由独立与同方差：
+\[
+  \Var(\hat\beta_1)
+  =
+  \sum a_i^2\sigma^2
+  =
+  \boxed{\frac{\sigma^2}{S_{xx}}}.
+\]
+\[
+  \Var(\hat\beta_0)
+  =
+  \sum b_i^2\sigma^2
+  =
+  \sigma^2\left(\frac1n+\frac{\bar x^2}{S_{xx}}\right).
+\]
+以及
+\[
+  \Cov(\hat\beta_0,\hat\beta_1)
+  =
+  \Cov\left(\sum b_iY_i,\sum a_iY_i\right)
+  =
+  \sigma^2\sum a_ib_i
+  =
+  -\frac{\sigma^2\bar x}{S_{xx}}.
+\]
+因此
+\[
+  \boxed{
+  \Var(\hat\beta_0)
+  =
+  \sigma^2\left(\frac1n+\frac{\bar x^2}{S_{xx}}\right),
+  }
+\]
+\[
+  \boxed{
+  \Cov(\hat\beta_0,\hat\beta_1)
+  =
+  -\frac{\sigma^2\bar x}{S_{xx}}.
+  }
+\]
+若 $\bar x>0$，斜率与截距估计负相关；斜率更陡时，为保持直线经过 $(\bar x,\bar y)$，截距倾向降低。
+
+\subsection{拟合均值与单个未来观测}
+
+在 $x_0$ 处的拟合均值为
+\[
+  \hat Y_0=\hat\beta_0+\hat\beta_1x_0.
+\]
+它是 $\E(Y\mid X=x_0)=\beta_0+\beta_1x_0$ 的无偏估计：
+\[
+  \E(\hat Y_0)=\beta_0+\beta_1x_0.
+\]
+方差为
+\[
+  \boxed{
+  \Var(\hat Y_0)
+  =
+  \sigma^2
+  \left[
+  \frac1n+\frac{(x_0-\bar x)^2}{S_{xx}}
+  \right].
+  }
+\]
+它在 $x_0=\bar x$ 处最小，离样本中心越远越大。
+
+均值响应的 CI：
+\[
+  \boxed{
+  \hat y_0
+  \pm
+  t_{\alpha/2,n-2}s_e
+  \sqrt{\frac1n+\frac{(x_0-\bar x)^2}{S_{xx}}}.
+  }
+\]
+单个未来观测还包含新误差项，因此预测区间更宽：
+\[
+  \boxed{
+  \hat y_0
+  \pm
+  t_{\alpha/2,n-2}s_e
+  \sqrt{1+\frac1n+\frac{(x_0-\bar x)^2}{S_{xx}}}.
+  }
+\]
+
+\subsection{斜率的区间与检验}
+
+用 $s_e^2$ 替代 $\sigma^2$：
+\[
+  \SE(\hat\beta_1)=\frac{s_e}{\sqrt{S_{xx}}}.
+\]
+斜率 CI：
+\[
+  \boxed{
+  \hat\beta_1
+  \pm
+  t_{\alpha/2,n-2}\frac{s_e}{\sqrt{S_{xx}}}.
+  }
+\]
+检验 $H_0:\beta_1=\beta_{1,0}$：
+\[
+  \boxed{
+  t_{\mathrm{obs}}
+  =
+  \frac{\hat\beta_1-\beta_{1,0}}
+  {s_e/\sqrt{S_{xx}}},
+  \qquad \nu=n-2.
+  }
+\]
+
+% ============================================================
+\section{残差及其性质}
+% ============================================================
+
+\subsection{误差与残差的区别}
+
+\[
+  \varepsilon_i=Y_i-\E(Y_i\mid x_i)
+\]
+是不可直接观测的真实误差；而
+\[
+  e_i=y_i-\hat y_i
+\]
+是拟合模型后可计算的残差。残差用于诊断误差假设，但残差不是误差本身。
+
+\subsection{简单线性回归残差性质}
+
+\begin{memorybox}[必须掌握：含截距 OLS 残差]
+\[
+  \boxed{\sum_{i=1}^ne_i=0,}
+\qquad
+  \boxed{\sum_{i=1}^nx_ie_i=0,}
+\qquad
+  \boxed{\sum_{i=1}^n\hat y_ie_i=0.}
+\]
+在模型正确时：
+\[
+  \boxed{\E(e_i)=0.}
+\]
+\end{memorybox}
+
+简单线性回归中，第 $i$ 个观测的杠杆值为
+\[
+  h_{ii}
+  =
+  \frac1n+\frac{(x_i-\bar x)^2}{S_{xx}}.
+\]
+残差方差为
+\[
+  \boxed{
+  \Var(e_i)
+  =
+  \sigma^2(1-h_{ii})
+  =
+  \sigma^2
+  \left[
+  1-\frac1n-\frac{(x_i-\bar x)^2}{S_{xx}}
+  \right].
+  }
+\]
+
+\begin{proofbox}[Week 9：残差期望与方差的标量证明]
+在简单线性回归中
+\[
+  e_i
+  =
+  Y_i-\hat\beta_0-\hat\beta_1x_i
+  =
+  Y_i-\bar Y-(x_i-\bar x)\hat\beta_1.
+\]
+因此
+\[
+\begin{aligned}
+  \E(e_i)
+  &=
+  \E(Y_i)-\E(\bar Y)-(x_i-\bar x)\E(\hat\beta_1)\\
+  &=
+  (\beta_0+\beta_1x_i)-(\beta_0+\beta_1\bar x)
+  -(x_i-\bar x)\beta_1
+  =
+  0.
+\end{aligned}
+\]
+令 $d_i=x_i-\bar x$。由于
+\[
+  \Var(Y_i-\bar Y)=\sigma^2\left(1-\frac1n\right),
+  \qquad
+  \Cov(Y_i-\bar Y,\hat\beta_1)=\frac{d_i\sigma^2}{S_{xx}},
+\]
+并且
+\[
+  \Var(\hat\beta_1)=\frac{\sigma^2}{S_{xx}},
+\]
+所以
+\[
+\begin{aligned}
+  \Var(e_i)
+  &=
+  \Var(Y_i-\bar Y-d_i\hat\beta_1)\\
+  &=
+  \sigma^2\left(1-\frac1n\right)
+  +
+  d_i^2\frac{\sigma^2}{S_{xx}}
+  -
+  2d_i\frac{d_i\sigma^2}{S_{xx}}\\
+  &=
+  \sigma^2\left[
+    1-\frac1n-\frac{(x_i-\bar x)^2}{S_{xx}}
+  \right].
+\end{aligned}
+\]
+\end{proofbox}
+
+\begin{conceptbox}[为什么残差方差小于误差方差]
+拟合值使用了同一个观测的信息，因此残差不是未经处理的原始误差。高杠杆观测对自己的拟合值影响更大，故其原始残差方差反而更小。这也是诊断时常使用标准化或学生化残差的原因。
+\end{conceptbox}
+
+\subsection{残差诊断的模式识别}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{p{3.7cm}X}
+\toprule
+残差图现象 & 可能问题\\
+\midrule
+围绕 0 随机散布、宽度大致恒定 & 线性与同方差假设较合理\\
+明显弯曲或波浪形 & 函数形式错误，可能需要重新指定模型或作变量变换\\
+漏斗形，散布随拟合值增大 & 异方差\\
+孤立的大残差 & 可能的异常响应值\\
+远离数据中心且杠杆高 & 可能的高杠杆点；不一定有大残差\\
+时间顺序上连续同号或周期模式 & 独立性可能失效\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================
+\section{多元线性回归与矩阵最小二乘}
+% ============================================================
+
+\subsection{模型与设计矩阵}
+
+含 $k$ 个预测变量的模型为
+\[
+  Y_i=\beta_0+\beta_1x_{i1}+\cdots+\beta_kx_{ik}+\varepsilon_i.
+\]
+矩阵形式：
+\[
+  \boxed{\by=\bX\bbeta+\bvarepsilon.}
+\]
+其中 $\bX$ 的第一列通常为全 1 截距列，维数为
+\[
+  \bX:n\times p,
+  \qquad p=k+1.
+\]
+
+\begin{conceptbox}[多元回归系数的解释]
+$\beta_j$ 表示：\textbf{保持其他预测变量不变}时，$x_j$ 增加一个单位，条件平均响应变化 $\beta_j$ 个单位。它不是忽略其他变量后 $x_j$ 与 $Y$ 的简单关联。
+\end{conceptbox}
+
+\subsection{矩阵最小二乘推导}
+
+最小化
+\[
+  SSE(\bbeta)
+  =
+  (\by-\bX\bbeta)^\top(\by-\bX\bbeta).
+\]
+对 $\bbeta$ 求梯度并令其为零：
+\[
+  -2\bX^\top(\by-\bX\hat{\bbeta})=0.
+\]
+得到正规方程
+\[
+  \boxed{\bX^\top\bX\hat{\bbeta}=\bX^\top\by.}
+\]
+若 $\bX$ 列满秩，使 $\bX^\top\bX$ 可逆，则
+\[
+  \boxed{
+  \hat{\bbeta}
+  =
+  (\bX^\top\bX)^{-1}\bX^\top\by.
+  }
+\]
+
+\begin{methodbox}[多元回归理论证明题]
+教师录音确认：multiple regression 不考给出大数据集后的繁重 numerical calculation。应重点准备以下证明路线：
+\begin{enumerate}
+  \item 从最小化 $SSE(\bbeta)$ 推出正规方程 $\bX^\top\bX\hat{\bbeta}=\bX^\top\by$；
+  \item 在列满秩条件下写出 $\hat{\bbeta}=(\bX^\top\bX)^{-1}\bX^\top\by$；
+  \item 由 $\by=\bX\bbeta+\bvarepsilon$ 推出 $\E(\hat{\bbeta})=\bbeta$；
+  \item 用协方差矩阵运算推出 $\Var(\hat{\bbeta})=\sigma^2(\bX^\top\bX)^{-1}$；
+  \item 用 $\be=(\bI-\bH)\by$ 与 $\bX^\top\be=\mathbf0$ 证明残差性质。
+\end{enumerate}
+\end{methodbox}
+
+\subsection{Hat matrix 与残差矩阵}
+
+定义帽子矩阵
+\[
+  \boxed{
+  \bH=\bX(\bX^\top\bX)^{-1}\bX^\top.
+  }
+\]
+则
+\[
+  \hat{\by}=\bH\by,
+  \qquad
+  \be=\by-\hat{\by}=(\bI-\bH)\by.
+\]
+$\bH$ 对称且幂等：
+\[
+  \bH^\top=\bH,
+  \qquad
+  \bH^2=\bH.
+\]
+残差与设计矩阵的每一列正交：
+\[
+  \boxed{\bX^\top\be=\mathbf 0.}
+\]
+若模型含截距列 $\1$，则 $\1^\top\be=0$，即残差和为零。
+
+\subsection{估计量与残差的分布性质}
+
+若
+\[
+  \E(\bvarepsilon)=\mathbf0,
+  \qquad
+  \Var(\bvarepsilon)=\sigma^2\bI,
+\]
+则
+\[
+  \boxed{\E(\hat{\bbeta})=\bbeta,}
+\]
+\[
+  \boxed{
+  \Var(\hat{\bbeta})
+  =
+  \sigma^2(\bX^\top\bX)^{-1}.
+  }
+\]
+证明：
+\[
+  \hat{\bbeta}
+  =
+  (\bX^\top\bX)^{-1}\bX^\top(\bX\bbeta+\bvarepsilon)
+  =
+  \bbeta+(\bX^\top\bX)^{-1}\bX^\top\bvarepsilon.
+\]
+取期望即得无偏性；利用协方差矩阵运算即得方差。
+
+残差协方差矩阵：
+\[
+  \boxed{
+  \Var(\be)=\sigma^2(\bI-\bH).
+  }
+\]
+因此
+\[
+  \Var(e_i)=\sigma^2(1-h_{ii}),
+\qquad
+  \Cov(e_i,e_j)=-\sigma^2h_{ij}\quad(i\ne j).
+\]
+残差一般并不相互独立。
+
+误差方差的无偏估计：
+\[
+  \boxed{
+  s^2=\frac{SSE}{n-p},
+  }
+\]
+其中 $p$ 是估计参数个数，\textbf{包括截距}。
+
+% ============================================================
+\section{录音确认的回归范围调整}
+% ============================================================
+
+\begin{scopebox}[Polynomial regression 不纳入期末]
+教师录音中明确说明：polynomial regression 属于 computer-based / R-based / graph-based work，手算负担过重，因此不进入期末考试。此前根据黑板照片临时标注为重点的判断，以本次录音确认结果为准。
+
+回归复习时间应转移到：
+\begin{itemize}
+  \item simple linear regression 的手算、最小二乘与基础推导；
+  \item multiple linear regression 的矩阵最小二乘、估计量期望/方差/协方差与残差性质证明；
+  \item Week 9 中 regression inference 的证明路线。
+\end{itemize}
+\end{scopebox}
+
+% ============================================================
+\section{MLE：从最大似然到推断}
+% ============================================================
+
+\subsection{Likelihood、log-likelihood 与 score}
+
+设 $Y_1,\ldots,Y_n$ 独立同分布，密度或概率质量函数为
+$f(y;\theta)$。观测值为 $y_1,\ldots,y_n$。
+\[
+  \boxed{
+  L(\theta)
+  =
+  \prod_{i=1}^nf(y_i;\theta).
+  }
+\]
+\[
+  \boxed{
+  \ell(\theta)
+  =
+  \log L(\theta)
+  =
+  \sum_{i=1}^n\log f(y_i;\theta).
+  }
+\]
+score 函数为
+\[
+  \boxed{
+  U(\theta)
+  =
+  \frac{\partial\ell(\theta)}{\partial\theta}.
+  }
+\]
+MLE 定义为
+\[
+  \boxed{
+  \hat\theta_{\mathrm{MLE}}
+  =
+  \arg\max_{\theta\in\Theta}L(\theta)
+  =
+  \arg\max_{\theta\in\Theta}\ell(\theta).
+  }
+\]
+
+\begin{methodbox}[MLE 推导标准流程]
+\begin{enumerate}
+  \item 写出单个观测的 pmf/pdf，并标明参数空间；
+  \item 利用独立性写乘积似然；
+  \item 取对数，将乘积转为求和；
+  \item 求 score，令 $U(\theta)=0$；
+  \item 解出候选 MLE；
+  \item 用二阶导数、凹性、端点或参数空间检查最大值；
+  \item 计算 Fisher 信息，写出大样本标准误与近似推断。
+\end{enumerate}
+\end{methodbox}
+
+\subsection{Fisher 信息与大样本推断}
+
+对标量参数，
+\[
+  \boxed{
+  I_n(\theta)
+  =
+  -\E_\theta\left[
+  \frac{\partial^2\ell(\theta)}{\partial\theta^2}
+  \right].
+  }
+\]
+在常见正则条件下，也有
+\[
+  I_n(\theta)=\Var_\theta[U(\theta)].
+\]
+独立观测的信息相加：
+\[
+  I_n(\theta)=nI_1(\theta).
+\]
+
+\begin{memorybox}[MLE 的渐近正态性]
+在常见正则条件下，当 $n$ 大时，
+\[
+  \boxed{
+  \hat\theta_{\mathrm{MLE}}
+  \approx
+  N\left(\theta,\ I_n(\theta)^{-1}\right).
+  }
+\]
+用 MLE 代入未知参数后，
+\[
+  \boxed{
+  \widehat{\SE}(\hat\theta_{\mathrm{MLE}})
+  =
+  \frac{1}{\sqrt{I_n(\hat\theta_{\mathrm{MLE}})}}.
+  }
+\]
+近似 $(1-\alpha)100\%$ Wald CI：
+\[
+  \boxed{
+  \hat\theta_{\mathrm{MLE}}
+  \pm
+  z_{\alpha/2}
+  \widehat{\SE}(\hat\theta_{\mathrm{MLE}}).
+  }
+\]
+\end{memorybox}
+
+\begin{warnbox}[Wald 近似的适用边界]
+Wald CI 与 Wald 检验依赖大样本渐近正态近似。样本很小、似然明显偏斜，或参数接近边界时，近似可能较差；区间甚至可能越出合法参数空间，例如比例区间超出 $[0,1]$、正参数区间出现负端点。遇到此类结果，应明确说明这是简单 Wald 近似的局限。
+\end{warnbox}
+
+检验 $H_0:\theta=\theta_0$ 可使用近似 Wald 统计量
+\[
+  \boxed{
+  Z_{\mathrm{obs}}
+  =
+  \frac{\hat\theta_{\mathrm{MLE}}-\theta_0}
+  {1/\sqrt{I_n(\hat\theta_{\mathrm{MLE}})}}.
+  }
+\]
+再按单尾或双尾临界值法作决策。
+
+\begin{conceptbox}[Fisher 信息的直觉]
+信息越大，对数似然在真参数附近越尖，参数越容易被精确定位；因此估计方差约为信息的倒数。样本量增加时信息通常线性增加，标准误通常按 $1/\sqrt n$ 缩小。
+\end{conceptbox}
+
+\subsection{MLE 的不变性}
+
+若 $\hat\theta$ 是 $\theta$ 的 MLE，且 $\phi=g(\theta)$，则在适当条件下
+\[
+  \boxed{
+  \hat\phi_{\mathrm{MLE}}=g(\hat\theta_{\mathrm{MLE}}).
+  }
+\]
+例如指数分布 rate 参数为 $\lambda$，mean 参数为
+$\beta=1/\lambda$；若 $\hat\lambda=1/\bar Y$，则
+\[
+  \hat\beta=\frac1{\hat\lambda}=\bar Y.
+\]
+
+% ============================================================
+\section{四类分布的 MLE 与推断}
+% ============================================================
+
+\subsection{正态分布}
+
+\subsubsection{方差已知，均值未知}
+
+若
+\[
+  Y_1,\ldots,Y_n\iid N(\mu,\sigma^2),
+\]
+且 $\sigma^2$ 已知，则
+\[
+  \ell(\mu)
+  =
+  -\frac n2\log(2\pi\sigma^2)
+  -
+  \frac1{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2.
+\]
+\[
+  U(\mu)
+  =
+  \frac1{\sigma^2}\sum_{i=1}^n(y_i-\mu).
+\]
+令 $U(\mu)=0$：
+\[
+  \boxed{\hat\mu_{\mathrm{MLE}}=\bar y.}
+\]
+二阶导数为 $-n/\sigma^2<0$，所以确为最大值。
+\[
+  \boxed{
+  I_n(\mu)=\frac n{\sigma^2},
+  \qquad
+  \SE(\hat\mu)=\frac{\sigma}{\sqrt n}.
+  }
+\]
+此处正态均值 MLE 的正态分布是精确结果，而不仅是渐近结果。
+
+\subsubsection{均值已知，方差未知}
+
+令 $v=\sigma^2$，且 $\mu$ 已知：
+\[
+  \ell(v)
+  =
+  -\frac n2\log(2\pi)
+  -\frac n2\log v
+  -\frac1{2v}\sum_{i=1}^n(y_i-\mu)^2.
+\]
+求导并令其为零：
+\[
+  \boxed{
+  \hat v_{\mathrm{MLE}}
+  =
+  \frac1n\sum_{i=1}^n(y_i-\mu)^2.
+  }
+\]
+Fisher 信息：
+\[
+  \boxed{
+  I_n(v)=\frac{n}{2v^2},
+  \qquad
+  \widehat{\SE}(\hat v)
+  =
+  \sqrt{\frac{2\hat v^2}{n}}
+  =
+  \hat v\sqrt{\frac2n}.
+  }
+\]
+
+\subsubsection{均值与方差都未知}
+
+\[
+  \boxed{
+  \hat\mu_{\mathrm{MLE}}=\bar y,
+  \qquad
+  \hat\sigma_{\mathrm{MLE}}^2
+  =
+  \frac1n\sum_{i=1}^n(y_i-\bar y)^2.
+  }
+\]
+注意
+\[
+  \E(\hat\sigma_{\mathrm{MLE}}^2)
+  =
+  \frac{n-1}{n}\sigma^2,
+\]
+所以它有偏；无偏样本方差使用分母 $n-1$。
+
+令 $v=\sigma^2$，Fisher 信息矩阵为
+\[
+  \boxed{
+  \mathbf I_n(\mu,v)
+  =
+  \begin{pmatrix}
+    n/v & 0\\
+    0 & n/(2v^2)
+  \end{pmatrix}.
+  }
+\]
+交叉信息为零，因为相关交叉二阶导数的期望包含
+\[
+  \E\left[\sum(Y_i-\mu)\right]=0.
+\]
+因此 $\hat\mu$ 与 $\hat v$ 在大样本下渐近不相关。
+
+\subsection{二项分布}
+
+先考虑一个二项计数
+\[
+  Y\sim\operatorname{Binomial}(m,p),
+\]
+观测到 $y$ 次成功。似然与对数似然为
+\[
+  L(p)
+  =
+  \binom myp^y(1-p)^{m-y},
+\]
+\[
+  \ell(p)
+  =
+  \log\binom my+y\log p+(m-y)\log(1-p).
+\]
+score：
+\[
+  U(p)=\frac yp-\frac{m-y}{1-p}.
+\]
+当 $0<y<m$ 时，令其为零：
+\[
+  \boxed{\hat p_{\mathrm{MLE}}=\frac ym.}
+\]
+若 $y=0$ 或 $y=m$，score 方程在参数空间内部没有根，但检查边界仍得到同一公式：
+\[
+  y=0\Rightarrow\hat p=0,
+  \qquad
+  y=m\Rightarrow\hat p=1.
+\]
+Fisher 信息：
+\[
+  \boxed{
+  I(p)=\frac{m}{p(1-p)}.
+  }
+\]
+所以
+\[
+  \boxed{
+  \widehat{\SE}(\hat p)
+  =
+  \sqrt{\frac{\hat p(1-\hat p)}{m}}.
+  }
+\]
+
+若有 $n$ 个独立的 $\operatorname{Binomial}(m,p)$ 观测，则
+\[
+  \hat p=\frac{\sum_{i=1}^ny_i}{nm},
+  \qquad
+  I_n(p)=\frac{nm}{p(1-p)}.
+\]
+Bernoulli 是 $m=1$ 的特殊情况。
+
+\begin{examplebox}[二项 MLE 与 Fisher 信息]
+若 $m=50$ 次试验观察到 $y=18$ 次成功，则
+\[
+  \hat p=\frac{18}{50}=0.36,
+\]
+\[
+  \widehat{\SE}(\hat p)
+  =
+  \sqrt{\frac{0.36(0.64)}{50}}
+  \approx0.0679.
+\]
+\end{examplebox}
+
+\subsection{Poisson 分布}
+
+若
+\[
+  Y_1,\ldots,Y_n\iid\operatorname{Poisson}(\lambda),
+\]
+则
+\[
+  f(y_i;\lambda)
+  =
+  \frac{\lambda^{y_i}e^{-\lambda}}{y_i!}.
+\]
+对数似然：
+\[
+  \ell(\lambda)
+  =
+  \sum_{i=1}^ny_i\log\lambda
+  -
+  n\lambda
+  -
+  \sum_{i=1}^n\log(y_i!).
+\]
+score：
+\[
+  U(\lambda)
+  =
+  \frac{\sum y_i}{\lambda}-n.
+\]
+因此
+\[
+  \boxed{\hat\lambda_{\mathrm{MLE}}=\bar y.}
+\]
+二阶导数：
+\[
+  \ell''(\lambda)
+  =
+  -\frac{\sum y_i}{\lambda^2}.
+\]
+利用 $\E(\sum Y_i)=n\lambda$：
+\[
+  \boxed{
+  I_n(\lambda)=\frac n\lambda.
+  }
+\]
+因此
+\[
+  \boxed{
+  \widehat{\SE}(\hat\lambda)
+  =
+  \sqrt{\frac{\hat\lambda}{n}}.
+  }
+\]
+近似 CI：
+\[
+  \boxed{
+  \hat\lambda
+  \pm
+  z_{\alpha/2}\sqrt{\frac{\hat\lambda}{n}}.
+  }
+\]
+
+\subsection{指数分布}
+
+课程采用 rate 参数化：
+\[
+  Y_1,\ldots,Y_n\iid\operatorname{Exponential}(\theta),
+\qquad
+  f(y;\theta)=\theta e^{-\theta y},
+\quad y>0,\theta>0.
+\]
+此时
+\[
+  \E(Y)=\frac1\theta,
+  \qquad
+  \Var(Y)=\frac1{\theta^2}.
+\]
+对数似然：
+\[
+  \ell(\theta)
+  =
+  n\log\theta-\theta\sum_{i=1}^ny_i.
+\]
+score：
+\[
+  U(\theta)
+  =
+  \frac n\theta-\sum_{i=1}^ny_i.
+\]
+因此
+\[
+  \boxed{
+  \hat\theta_{\mathrm{MLE}}
+  =
+  \frac{n}{\sum y_i}
+  =
+  \frac1{\bar y}.
+  }
+\]
+\[
+  \ell''(\theta)=-\frac n{\theta^2},
+\qquad
+  \boxed{I_n(\theta)=\frac n{\theta^2}.}
+\]
+所以
+\[
+  \boxed{
+  \widehat{\SE}(\hat\theta)
+  =
+  \frac{\hat\theta}{\sqrt n}.
+  }
+\]
+近似 CI：
+\[
+  \boxed{
+  \hat\theta
+  \pm
+  z_{\alpha/2}\frac{\hat\theta}{\sqrt n}.
+  }
+\]
+
+\begin{warnbox}[指数分布参数化]
+必须先确认参数是 rate 还是 mean/scale。
+\[
+  f(y;\theta)=\theta e^{-\theta y}
+  \quad\Rightarrow\quad
+  \theta\text{ 是 rate，MLE}=1/\bar y.
+\]
+\[
+  f(y;\beta)=\frac1\beta e^{-y/\beta}
+  \quad\Rightarrow\quad
+  \beta\text{ 是 mean/scale，MLE}=\bar y.
+\]
+\end{warnbox}
+
+\subsection{四类分布速查表}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\small
+\begin{tabularx}{\textwidth}{p{2.5cm}p{3.1cm}p{3.1cm}X}
+\toprule
+模型 & MLE & Fisher 信息 & 估计标准误\\
+\midrule
+$N(\mu,\sigma^2)$，$\sigma^2$ 已知
+& $\hat\mu=\bar Y$
+& $I_n(\mu)=n/\sigma^2$
+& $\sigma/\sqrt n$\\
+$N(\mu,v)$，$\mu$ 已知
+& $\hat v=n^{-1}\sum(Y_i-\mu)^2$
+& $I_n(v)=n/(2v^2)$
+& $\hat v\sqrt{2/n}$\\
+$\operatorname{Binomial}(m,p)$
+& $\hat p=Y/m$
+& $I(p)=m/[p(1-p)]$
+& $\sqrt{\hat p(1-\hat p)/m}$\\
+$\operatorname{Poisson}(\lambda)$
+& $\hat\lambda=\bar Y$
+& $I_n(\lambda)=n/\lambda$
+& $\sqrt{\hat\lambda/n}$\\
+$\operatorname{Exponential}(\theta)$，rate
+& $\hat\theta=1/\bar Y$
+& $I_n(\theta)=n/\theta^2$
+& $\hat\theta/\sqrt n$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================
+\section{高频证明与答题模板}
+% ============================================================
+
+\subsection{证明题的通用路线}
+
+\begin{methodbox}[证明估计量无偏]
+\begin{enumerate}
+  \item 把估计量写成随机变量的线性组合；
+  \item 利用期望线性性；
+  \item 代入每个随机变量的期望；
+  \item 化简为目标参数。
+\end{enumerate}
+\end{methodbox}
+
+\begin{methodbox}[计算估计量方差]
+\begin{enumerate}
+  \item 提取常数的平方；
+  \item 展开线性组合方差；
+  \item 使用独立性删除协方差项，或保留给定协方差；
+  \item 化简并检查单位。
+\end{enumerate}
+\end{methodbox}
+
+\begin{methodbox}[证明 OLS 残差性质]
+直接从正规方程出发：
+\[
+  \bX^\top(\by-\bX\hat{\bbeta})=\mathbf0
+  \quad\Longrightarrow\quad
+  \bX^\top\be=\mathbf0.
+\]
+若 $\bX$ 第一列是全 1，则第一条方程给出 $\sum e_i=0$；其他列分别给出残差与各预测变量正交。
+\end{methodbox}
+
+\subsection{完整书面结论的语言}
+
+\begin{itemize}
+  \item \textbf{拒绝 $H_0$：}“在 $\alpha=0.05$ 显著性水平下，数据提供充分证据支持……”
+  \item \textbf{不能拒绝 $H_0$：}“在 $\alpha=0.05$ 显著性水平下，数据不足以支持……” 
+  \item 不写“证明了 $H_0$ 为真”，也不写“接受 $H_0$”。
+  \item CI 解释必须包含参数、置信水平、方向与单位。
+  \item 回归斜率解释必须包含“保持其他变量不变”（多元回归）与响应单位。
+\end{itemize}
+
+% ============================================================
+\section{考前公式总表}
+% ============================================================
+
+\subsection{无偏估计与 MSE}
+
+\[
+  \Bias(\hat\theta)=\E(\hat\theta)-\theta,
+  \qquad
+  \MSE(\hat\theta)=\Var(\hat\theta)+\Bias(\hat\theta)^2.
+\]
+\[
+  a^*_{\text{combine}}
+  =
+  \frac{v_2-c}{v_1+v_2-2c}.
+\]
+
+\subsection{均值推断}
+
+\[
+  \bar x\pm z_{\alpha/2}\frac{\sigma}{\sqrt n},
+  \qquad
+  Z=\frac{\bar x-\mu_0}{\sigma/\sqrt n}.
+\]
+\[
+  \bar x\pm t_{\alpha/2,n-1}\frac{s}{\sqrt n},
+  \qquad
+  t=\frac{\bar x-\mu_0}{s/\sqrt n}.
+\]
+\[
+  (\bar x_1-\bar x_2)
+  \pm
+  z_{\alpha/2}
+  \sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}.
+\]
+\[
+  s_p^2
+  =
+  \frac{(n_1-1)s_1^2+(n_2-1)s_2^2}{n_1+n_2-2},
+\]
+\[
+  t
+  =
+  \frac{(\bar x_1-\bar x_2)-\Delta_0}
+  {s_p\sqrt{1/n_1+1/n_2}}.
+\]
+\[
+  t_{\mathrm{paired}}
+  =
+  \frac{\bar d-\Delta_0}{s_d/\sqrt n}.
+\]
+
+\subsection{比例推断}
+
+\[
+  \hat p=\frac xn,
+  \qquad
+  \hat p\pm z_{\alpha/2}
+  \sqrt{\frac{\hat p(1-\hat p)}n},
+\]
+\[
+  Z=\frac{\hat p-p_0}{\sqrt{p_0(1-p_0)/n}}.
+\]
+\[
+  (\hat p_1-\hat p_2)
+  \pm
+  z_{\alpha/2}
+  \sqrt{
+  \frac{\hat p_1(1-\hat p_1)}{n_1}
+  +
+  \frac{\hat p_2(1-\hat p_2)}{n_2}
+  }.
+\]
+\[
+  \hat p_{\mathrm{pool}}=\frac{x_1+x_2}{n_1+n_2},
+\quad
+  Z=
+  \frac{\hat p_1-\hat p_2}
+  {\sqrt{\hat p_{\mathrm{pool}}(1-\hat p_{\mathrm{pool}})
+  (1/n_1+1/n_2)}}.
+\]
+
+\subsection{回归}
+
+\[
+  \hat\beta_1=\frac{S_{xy}}{S_{xx}},
+  \qquad
+  \hat\beta_0=\bar y-\hat\beta_1\bar x,
+\]
+\[
+  SSE=S_{yy}-\frac{S_{xy}^2}{S_{xx}},
+  \qquad
+  s_e^2=\frac{SSE}{n-2}.
+\]
+\[
+  \Var(\hat\beta_1)=\frac{\sigma^2}{S_{xx}},
+  \qquad
+  \Var(\hat\beta_0)
+  =
+  \sigma^2\left(\frac1n+\frac{\bar x^2}{S_{xx}}\right),
+\]
+\[
+  \Cov(\hat\beta_0,\hat\beta_1)
+  =
+  -\frac{\sigma^2\bar x}{S_{xx}}.
+\]
+\[
+  \hat{\bbeta}=(\bX^\top\bX)^{-1}\bX^\top\by,
+  \qquad
+  \bX^\top\be=\mathbf0,
+\]
+\[
+  \Var(\hat{\bbeta})
+  =
+  \sigma^2(\bX^\top\bX)^{-1},
+  \qquad
+  s^2=\frac{SSE}{n-p}.
+\]
+\[
+  \frac{d}{dx}
+  \left(\beta_0+\beta_1x+\cdots+\beta_qx^q\right)
+  =
+  \beta_1+2\beta_2x+\cdots+q\beta_qx^{q-1}.
+\]
+\[
+  \text{二次模型转折点：}\qquad
+  x^\star=-\frac{\beta_1}{2\beta_2}.
+\]
+\[
+  z=x-c:\qquad
+  \gamma_0=m(c),\quad
+  \gamma_1=m'(c),\quad
+  \gamma_2=\beta_2.
+\]
+
+\subsection{MLE}
+
+\[
+  L(\theta)=\prod_{i=1}^nf(y_i;\theta),
+  \quad
+  \ell(\theta)=\log L(\theta),
+  \quad
+  U(\theta)=\ell'(\theta),
+\]
+\[
+  I_n(\theta)=-\E[\ell''(\theta)],
+  \qquad
+  \widehat{\SE}(\hat\theta)
+  =
+  \frac1{\sqrt{I_n(\hat\theta)}}.
+\]
+\[
+  \hat\theta
+  \pm
+  z_{\alpha/2}\widehat{\SE}(\hat\theta).
+\]
+
+% ============================================================
+\section{最后检查清单}
+% ============================================================
+
+\begin{scopebox}[交卷前逐项检查]
+\begin{enumerate}
+  \item 我是否先定义了参数，而不只是写样本统计量？
+  \item 单尾还是双尾是否由题意决定，临界值是否放在正确尾部？
+  \item 未知方差时是否正确使用 $t$ 与自由度？
+  \item 两样本是独立还是配对？等方差是否有依据？
+  \item 比例 CI 与比例检验是否使用了正确的标准误？
+  \item 回归设计矩阵是否含截距列？参数个数 $p$ 是否包括截距？
+  \item 多元回归系数解释是否写了“保持其他变量不变”？
+  \item 多元回归证明是否写清 $\bX$ 列满秩、含截距、参数个数 $p$ 与残差自由度 $n-p$？
+  \item MLE 是否写了参数空间、score、边界或最大值检查与 Fisher 信息？
+  \item 最终结论是否联系题目语境与单位，并使用“拒绝/不能拒绝 $H_0$”？
+\end{enumerate}
+\end{scopebox}
+
+\begin{scopebox}[资料核对与暂留问题]
+本讲义已使用以下材料交叉核对：课程中文讲义、英文讲义、Week 1--14 相关课件、两套 2026 样卷及答案、往年试题中与当前范围相符的部分。
+
+第三张黑板图中额外补写统计量的具体考试含义，等待教师后续确认。确认后应优先核对：
+\begin{itemize}
+  \item 它是否只是单样本/双样本未知方差 $t$ 统计量的提示；
+  \item 是否要求额外的总体方差本身推断；
+  \item 是否给定等方差条件，或要求使用其他双样本标准误。
+\end{itemize}
+\end{scopebox}
+
+\end{document}

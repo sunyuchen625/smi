@@ -1,0 +1,1582 @@
+% !TEX program = xelatex
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[UTF8,fontset=none]{ctex}
+\setCJKmainfont[BoldFont=Heiti SC,ItalicFont=Songti SC]{Songti SC}
+\setCJKsansfont{Heiti SC}
+\setCJKmonofont{Heiti SC}
+
+\usepackage{amsmath,amssymb,amsfonts,mathtools}
+\usepackage{booktabs,array,longtable,tabularx}
+\usepackage[margin=1.85cm]{geometry}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.42em}
+\setlist[itemize]{leftmargin=*,topsep=2pt,itemsep=1.5pt}
+\setlist[enumerate]{leftmargin=*,topsep=2pt,itemsep=1.5pt}
+\allowdisplaybreaks
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small Statistical Modelling and Inference}
+\rhead{\small 2026 题型模板}
+\cfoot{\thepage}
+
+\hypersetup{
+  pdftitle={SMI Final Problem Templates 2026},
+  pdfauthor={Compiled from notes, assignments, sample exams, Week 9 proof notes, and lecture examples}
+}
+
+\newcommand{\E}{\operatorname{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Bias}{\operatorname{Bias}}
+\newcommand{\MSE}{\operatorname{MSE}}
+\newcommand{\SE}{\operatorname{SE}}
+\newcommand{\iid}{\overset{\mathrm{iid}}{\sim}}
+\newcommand{\ind}{\perp\!\!\!\perp}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bH}{\mathbf{H}}
+\newcommand{\bI}{\mathbf{I}}
+\newcommand{\be}{\mathbf{e}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bvarepsilon}{\boldsymbol{\varepsilon}}
+\newcommand{\ones}{\mathbf{1}}
+
+\newtcolorbox{scopebox}[1][]{
+  colback=gray!5!white,colframe=gray!65!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{methodbox}[1][]{
+  colback=green!4!white,colframe=green!55!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{templatebox}[1][]{
+  colback=blue!4!white,colframe=blue!60!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{proofbox}[1][]{
+  colback=violet!3!white,colframe=violet!55!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{warnbox}[1][]{
+  colback=red!4!white,colframe=red!60!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{memorybox}[1][]{
+  colback=orange!6!white,colframe=orange!75!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{examplebox}[1][]{
+  colback=yellow!7!white,colframe=yellow!55!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+
+\title{\textbf{Statistical Modelling and Inference}\\[0.3em]
+2026 期末题型方法、答题模板与证明清单}
+\author{结合期末复习笔记、Assignment 1/2、Sample Exam、Week 9 证明与课件例题整理}
+\date{June 2026}
+
+\begin{document}
+\maketitle
+
+\begin{scopebox}[使用说明]
+这份笔记的目标不是重新讲完整理论，而是回答三个考场问题：
+\begin{enumerate}
+  \item 看到题目后应该先判断什么？
+  \item 计算题、解释题和证明题各自怎样写才完整？
+  \item Assignment 1/2 与各份样卷中反复出现的题型，应该套哪一套模板？
+\end{enumerate}
+
+按 2026-06-17 录音确认，期末重点仍为四块：无偏估计与 MSE；Estimation \& Testing；Regression Modeling；四类分布的 MLE 推断。明确排除 ANOVA/ANCOVA、R 编程、P-value、Power、polynomial regression、nested-model comparison。若旧样卷或作业中出现这些内容，本笔记只保留“识别提醒”，不作为复习重点。
+\end{scopebox}
+
+\begin{memorybox}[考场总原则]
+\begin{enumerate}
+  \item 先写参数和模型，再写统计量。不要一上来代数字。
+  \item 区间和检验题必须写：参数、假设、标准误、参考分布、临界值或拒绝域、结论。
+  \item 证明题先把目标改写成期望、方差、协方差或正交性，再套线性性和独立性。
+  \item 回归题先分辨 simple linear regression 手算、Week 9 证明、multiple regression 矩阵证明。
+  \item MLE 题至少写 likelihood/log-likelihood、score、解、最大值或边界检查、Fisher 信息。
+\end{enumerate}
+\end{memorybox}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{材料来源与题型地图}
+% ============================================================
+
+\begin{longtable}{p{0.23\textwidth}p{0.38\textwidth}p{0.29\textwidth}}
+\toprule
+来源 & 出现题型 & 本笔记处理方式\\
+\midrule
+Assignment 1 & 样本均值和样本方差无偏证明；单总体均值区间与右尾检验；两总体均值检验 & 纳入核心模板；两样本题按题目措辞区分 pooled 与 Welch\\
+Assignment 2 & 简单线性回归拟合、残差标准误、斜率检验、均值响应区间与单个预测区间 & 纳入回归计算模板；R 输出只转化为手算/解释模板\\
+Sample Exam 1/2 & Bias/MSE；单均值与两均值；多元回归正规方程；Week 9 回归证明；Binomial/Normal MLE & 纳入核心模板\\
+旧 final/prep 与 2025 sample & MSE 分解、方差区间、回归残差证明、multiple regression 理论、Exponential/Poisson MLE；也含 R、P-value、Power、ANOVA 型内容 & 范围内部分纳入；排除项只作提醒\\
+现有期末复习讲义 & 最终考试范围、公式、证明链、当前样卷 & 作为最高优先级口径\\
+Week 1--13 课件例题 & 单均值、两均值、比例推断、简单回归手算、MLE 端点检查与 Fisher 信息 & 选择性整合为短例题卡片；R、ANOVA、Power、polynomial 继续排除\\
+\bottomrule
+\end{longtable}
+
+\begin{warnbox}[旧材料中容易误带入期末的内容]
+\begin{itemize}
+  \item 旧样卷有 P-value 和 Power，但录音确认不考。检验题按临界值法写。
+  \item Assignment 2 要求 RStudio，本次期末不考 R 编程。保留统计解释和手算公式。
+  \item 旧材料中的 separate/parallel/nested model、ANOVA、polynomial regression 不作为重点。
+  \item 如果题目明确给出 R output 的某些数值，可读 coefficient、standard error、residual standard error，但不要准备 R 代码。
+\end{itemize}
+\end{warnbox}
+
+% ============================================================
+\section{通用答题模板}
+% ============================================================
+
+\subsection{CI 和检验题的统一模板}
+
+\begin{templatebox}[置信区间模板]
+\begin{enumerate}
+  \item 定义目标参数，例如 $\mu$、$\mu_1-\mu_2$、$p$、$\beta_1$。
+  \item 写点估计 $\hat\theta$。
+  \item 写标准误 $\SE(\hat\theta)$。
+  \item 写参考分布和临界值：
+  \[
+    \frac{\hat\theta-\theta}{\SE(\hat\theta)} \approx N(0,1)
+    \quad\text{或}\quad
+    \frac{\hat\theta-\theta}{\SE(\hat\theta)} \sim t_\nu .
+  \]
+  \item 套公式：
+  \[
+    \hat\theta \pm c\,\SE(\hat\theta).
+  \]
+  \item 用题目语境解释：“We are $100(1-\alpha)\%$ confident that ... lies between ...”
+\end{enumerate}
+\end{templatebox}
+
+\begin{templatebox}[临界值法检验模板]
+\begin{enumerate}
+  \item 写 $H_0$ 与 $H_a$，注意单尾方向。
+  \item 写显著性水平 $\alpha$。
+  \item 写检验统计量：
+  \[
+    T_{\mathrm{obs}}=\frac{\hat\theta-\theta_0}{\SE_0(\hat\theta)}.
+  \]
+  \item 写参考分布和拒绝域。右尾：$T_{\mathrm{obs}}>c$；左尾：$T_{\mathrm{obs}}<-c$；双尾：$|T_{\mathrm{obs}}|>c$。
+  \item 比较统计量与拒绝域。
+  \item 写结论：Reject $H_0$ 或 fail to reject $H_0$，再用题目语境解释。不要写 “accept $H_0$”。
+\end{enumerate}
+\end{templatebox}
+
+\subsection{证明题的统一模板}
+
+\begin{methodbox}[证明题先找“目标形状”]
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+要证明 & 常用入口\\
+\midrule
+无偏 & 计算 $\E(\hat\theta)$，看是否等于 $\theta$\\
+MSE 分解 & 写 $\hat\theta-\theta=(\hat\theta-\E\hat\theta)+(\E\hat\theta-\theta)$\\
+方差 & 把估计量写成线性组合，再用独立性\\
+协方差 & 用 $\Cov(\sum a_iY_i,\sum b_iY_i)=\sum a_ib_i\Var(Y_i)$\\
+最小二乘 & 对 SSE 求导，或用正交投影\\
+残差性质 & 从正规方程 $\bX^T\be=0$ 或 $\sum e_i=0,\sum x_ie_i=0$ 出发\\
+MLE & 写 $\ell(\theta)$，求 score，检查最大值，再写 Fisher 信息\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{methodbox}
+
+% ============================================================
+\section{无偏估计、Bias 与 MSE}
+% ============================================================
+
+\subsection{定义题模板}
+
+\begin{memorybox}[必须会写]
+\[
+  \Bias(\hat\theta)=\E(\hat\theta)-\theta,
+  \qquad
+  \MSE(\hat\theta)=\E[(\hat\theta-\theta)^2].
+\]
+若 $\E(\hat\theta)=\theta$，则 $\hat\theta$ 是 $\theta$ 的无偏估计量。若无偏，
+\[
+  \MSE(\hat\theta)=\Var(\hat\theta).
+\]
+\end{memorybox}
+
+\subsection{MSE 分解证明}
+
+\begin{proofbox}[可直接背的证明]
+令 $b=\Bias(\hat\theta)=\E(\hat\theta)-\theta$。则
+\[
+  \hat\theta-\theta
+  =
+  \{\hat\theta-\E(\hat\theta)\}
+  +
+  \{\E(\hat\theta)-\theta\}
+  =
+  \{\hat\theta-\E(\hat\theta)\}+b.
+\]
+平方并取期望：
+\[
+\begin{aligned}
+  \MSE(\hat\theta)
+  &=\E[(\hat\theta-\theta)^2]\\
+  &=\E[(\hat\theta-\E\hat\theta)^2]
+    +2b\,\E(\hat\theta-\E\hat\theta)+b^2\\
+  &=\Var(\hat\theta)+b^2.
+\end{aligned}
+\]
+因此
+\[
+  \boxed{\MSE(\hat\theta)=\Var(\hat\theta)+\Bias(\hat\theta)^2}.
+\]
+\end{proofbox}
+
+\subsection{缩放样本均值型题}
+
+\begin{methodbox}[缩放样本均值型题]
+若 $\E(\bar Y)=\mu$，$\Var(\bar Y)=\sigma^2/n$，且
+\[
+  T=c\bar Y,
+\]
+则
+\[
+  \E(T)=c\mu,
+  \qquad
+  \Bias(T)=c\mu-\mu=(c-1)\mu,
+\]
+\[
+  \Var(T)=c^2\frac{\sigma^2}{n},
+  \qquad
+  \MSE(T)=c^2\frac{\sigma^2}{n}+(c-1)^2\mu^2.
+\]
+若令 $T^*=aT$ 无偏，则需要
+\[
+  \E(aT)=ac\mu=\mu,
+  \qquad
+  \boxed{a=\frac1c}.
+\]
+\end{methodbox}
+
+\subsection{线性偏估计修正}
+
+\begin{examplebox}[Week 1 Exercise 型：把有偏估计量改成无偏]
+若题目给出
+\[
+  \E(\hat\theta)=a\theta+b,\qquad a\ne0,
+\]
+则先写 bias：
+\[
+  \Bias(\hat\theta)
+  =
+  \E(\hat\theta)-\theta
+  =
+  (a-1)\theta+b.
+\]
+若要求构造一个无偏估计量，令
+\[
+  \hat\theta^*=\frac{\hat\theta-b}{a}.
+\]
+验证：
+\[
+  \E(\hat\theta^*)
+  =
+  \frac{\E(\hat\theta)-b}{a}
+  =
+  \frac{a\theta+b-b}{a}
+  =
+  \theta.
+\]
+所以 $\hat\theta^*$ 是 $\theta$ 的无偏估计量。
+\end{examplebox}
+
+\subsection{组合两个估计量并最小化 MSE}
+
+\begin{methodbox}[组合两个估计量并优化权重]
+若 $T_1,T_2$ 都无偏估计 $\theta$，则
+\[
+  \E(\hat\theta_a)=a\theta+(1-a)\theta=\theta,
+\]
+所以任何 $a$ 都无偏。令
+\[
+  V_1=\Var(T_1),\quad V_2=\Var(T_2),\quad C=\Cov(T_1,T_2).
+\]
+因为无偏，最小化 MSE 等价于最小化方差：
+\[
+  \Var(\hat\theta_a)
+  =
+  a^2V_1+(1-a)^2V_2+2a(1-a)C.
+\]
+求导后
+\[
+  \boxed{
+  a^*=\frac{V_2-C}{V_1+V_2-2C}
+  }.
+\]
+若 $T_1,T_2$ 独立，则 $C=0$，
+\[
+  \boxed{
+  a^*=\frac{V_2}{V_1+V_2}
+  }.
+\]
+权重更偏向方差较小的估计量。
+\end{methodbox}
+
+\subsection{样本均值与样本方差无偏证明}
+
+\begin{proofbox}[证明样本均值无偏]
+若 $Y_1,\ldots,Y_n$ iid，且 $\E(Y_i)=\mu$，则
+\[
+  \E(\bar Y)
+  =
+  \E\left(\frac1n\sum_{i=1}^nY_i\right)
+  =
+  \frac1n\sum_{i=1}^n\E(Y_i)
+  =
+  \mu.
+\]
+因此 $\bar Y$ 是 $\mu$ 的无偏估计量。
+\end{proofbox}
+
+\begin{proofbox}[证明样本方差无偏]
+令
+\[
+  S^2=\frac1{n-1}\sum_{i=1}^n(Y_i-\bar Y)^2.
+\]
+使用恒等式
+\[
+  \sum_{i=1}^n(Y_i-\bar Y)^2
+  =
+  \sum_{i=1}^n(Y_i-\mu)^2-n(\bar Y-\mu)^2.
+\]
+取期望：
+\[
+\begin{aligned}
+  \E\left[\sum_{i=1}^n(Y_i-\bar Y)^2\right]
+  &=
+  \sum_{i=1}^n\Var(Y_i)-n\Var(\bar Y)\\
+  &=
+  n\sigma^2-n\frac{\sigma^2}{n}
+  =
+  (n-1)\sigma^2.
+\end{aligned}
+\]
+所以
+\[
+  \E(S^2)
+  =
+  \frac1{n-1}(n-1)\sigma^2
+  =
+  \sigma^2.
+\]
+\end{proofbox}
+
+\begin{proofbox}[为什么样本标准差不是无偏估计]
+虽然 $S^2$ 对 $\sigma^2$ 无偏，但 $S$ 一般不对 $\sigma$ 无偏。因为 $S\ge 0$ 且 $\Var(S)>0$，
+\[
+  \Var(S)=\E(S^2)-\{\E(S)\}^2>0.
+\]
+若 $\E(S^2)=\sigma^2$，则
+\[
+  \{\E(S)\}^2<\sigma^2.
+\]
+由于 $\E(S)\ge 0$，所以
+\[
+  \E(S)<\sigma.
+\]
+因此 $S$ 通常低估 $\sigma$。
+\end{proofbox}
+
+% ============================================================
+\section{Estimation \& Testing}
+% ============================================================
+
+\subsection{单总体均值}
+
+\begin{templatebox}[已知总体标准差的均值推断]
+若 $\bar X$ 来自样本量 $n$ 的样本，且 $\sigma$ 已知：
+\[
+  \SE(\bar X)=\frac{\sigma}{\sqrt n},
+  \qquad
+  Z=\frac{\bar X-\mu_0}{\sigma/\sqrt n}.
+\]
+置信区间：
+\[
+  \boxed{
+  \bar x\pm z_{\alpha/2}\frac{\sigma}{\sqrt n}
+  }.
+\]
+右尾检验 $H_0:\mu=\mu_0$ vs. $H_a:\mu>\mu_0$：
+\[
+  \text{Reject }H_0\text{ if }Z_{\mathrm{obs}}>z_\alpha.
+\]
+左尾用 $Z_{\mathrm{obs}}<-z_\alpha$，双尾用 $|Z_{\mathrm{obs}}|>z_{\alpha/2}$。
+\end{templatebox}
+
+\begin{templatebox}[未知总体标准差的均值推断]
+若总体正态或样本足够大，且 $\sigma$ 未知，用样本标准差 $s$：
+\[
+  \SE(\bar X)=\frac{s}{\sqrt n},
+  \qquad
+  t=\frac{\bar X-\mu_0}{s/\sqrt n},
+  \qquad
+  \nu=n-1.
+\]
+置信区间：
+\[
+  \boxed{
+  \bar x\pm t_{\alpha/2,n-1}\frac{s}{\sqrt n}
+  }.
+\]
+检验的拒绝域与 $Z$ 检验同形，只是临界值换成 $t$ 临界值。
+\end{templatebox}
+
+\begin{examplebox}[Week 1：单总体均值区间与检验短例]
+\textbf{已知 $\sigma$ 的 99\% CI。}
+若 $n=100$，$\bar x=22$，总体标准差 $\sigma=3.5$，则
+\[
+  \SE=\frac{3.5}{\sqrt{100}}=0.35.
+\]
+99\% 置信区间使用 $z_{0.005}=2.576$：
+\[
+  22\pm 2.576(0.35)
+  =
+  22\pm0.902
+  =
+  (21.10,22.90).
+\]
+结论写成：we are 99\% confident that the population mean battery life lies between 21.10 and 22.90 hours.
+
+\textbf{未知 $\sigma$ 的小样本 CI。}
+若 $n=24$，$\bar x=98.25$，$s=0.73$，且总体近似正态，90\% CI 为
+\[
+  98.25\pm t_{0.05,23}\frac{0.73}{\sqrt{24}}.
+\]
+若表中给 $t_{0.05,23}\approx1.714$，则区间约为
+\[
+  98.25\pm0.26=(97.99,98.51).
+\]
+
+\textbf{双尾检验。}
+若检验居民平均体重是否不同于 168 lbs，$n=65$，$\bar x=169.5$，$s=3.9$，则
+\[
+  H_0:\mu=168,\qquad H_a:\mu\ne168,
+\]
+\[
+  Z_{\mathrm{obs}}
+  =
+  \frac{169.5-168}{3.9/\sqrt{65}}
+  \approx3.10.
+\]
+在 $\alpha=0.05$ 双尾检验中，拒绝域是 $|Z|>1.96$。因为 $3.10>1.96$，拒绝 $H_0$，有足够证据说明平均体重不同于 168 lbs。
+\end{examplebox}
+
+\begin{methodbox}[Assignment 1 Q2 型：大样本单均值右尾检验]
+题目说 “worked more than 7 hours”，应写
+\[
+  H_0:\mu=7
+  \quad\text{或}\quad
+  H_0:\mu\le 7,
+  \qquad
+  H_a:\mu>7.
+\]
+若 $n=200,\bar x=7.10,s=3$，大样本可用
+\[
+  Z_{\mathrm{obs}}
+  =
+  \frac{7.10-7}{3/\sqrt{200}}
+  \approx 0.471.
+\]
+在 $\alpha=0.05$ 右尾检验中，拒绝域为 $Z>1.645$。因为 $0.471<1.645$，不能拒绝 $H_0$。结论必须写成：没有足够证据说明学生平均每周工作时间超过 7 小时。
+\end{methodbox}
+
+\subsection{两总体均值}
+
+\begin{methodbox}[先判断题型]
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+题目条件 & 标准误 & 参考分布\\
+\midrule
+两个独立大样本 & $\sqrt{s_1^2/n_1+s_2^2/n_2}$ & $Z$ 近似\\
+两个独立小样本，正态且等方差 & $s_p\sqrt{1/n_1+1/n_2}$ & $t_{n_1+n_2-2}$\\
+两个独立小样本，正态但不等方差 & $\sqrt{s_1^2/n_1+s_2^2/n_2}$ & Welch $t$\\
+配对样本 & $s_d/\sqrt n$，其中 $d_i=x_i-y_i$ & $t_{n-1}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{methodbox}
+
+\begin{templatebox}[两个独立大样本]
+估计目标为 $\Delta=\mu_1-\mu_2$：
+\[
+  \hat\Delta=\bar x_1-\bar x_2,
+  \qquad
+  \SE(\hat\Delta)=\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}.
+\]
+CI：
+\[
+  \boxed{
+  (\bar x_1-\bar x_2)
+  \pm
+  z_{\alpha/2}
+  \sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}
+  }.
+\]
+检验 $H_0:\mu_1-\mu_2=\Delta_0$：
+\[
+  Z_{\mathrm{obs}}
+  =
+  \frac{(\bar x_1-\bar x_2)-\Delta_0}
+  {\sqrt{s_1^2/n_1+s_2^2/n_2}}.
+\]
+\end{templatebox}
+
+\begin{examplebox}[Week 2：两个独立大样本均值，Vitamin C 例题]
+Placebo 组：$\bar y_1=2.2,s_1=0.12,n_1=155$；Vitamin C 组：
+$\bar y_2=1.9,s_2=0.10,n_2=208$。比较
+\[
+  H_0:\mu_1-\mu_2=0,
+  \qquad
+  H_a:\mu_1-\mu_2\ne0.
+\]
+标准误为
+\[
+  \SE
+  =
+  \sqrt{\frac{0.12^2}{155}+\frac{0.10^2}{208}}
+  \approx0.0119.
+\]
+检验统计量：
+\[
+  Z_{\mathrm{obs}}
+  =
+  \frac{2.2-1.9}{0.0119}
+  \approx25.3.
+\]
+在 $\alpha=0.05$ 双尾检验中，$25.3>1.96$，拒绝 $H_0$。95\% CI 为
+\[
+  0.3\pm1.96(0.0119)
+  =
+  (0.277,0.323).
+\]
+写结论时要说清方向：placebo 组平均感冒次数比 Vitamin C 组高，差值约在 $0.277$ 到 $0.323$ 之间。
+\end{examplebox}
+
+\begin{templatebox}[等方差 pooled 推断]
+若题目说明两个正态总体方差相等：
+\[
+  s_p^2=
+  \frac{(n_1-1)s_1^2+(n_2-1)s_2^2}{n_1+n_2-2},
+  \qquad
+  \nu=n_1+n_2-2.
+\]
+\[
+  t_{\mathrm{obs}}
+  =
+  \frac{(\bar x_1-\bar x_2)-\Delta_0}
+  {s_p\sqrt{1/n_1+1/n_2}}.
+\]
+CI：
+\[
+  (\bar x_1-\bar x_2)
+  \pm
+  t_{\alpha/2,\nu}s_p\sqrt{\frac1{n_1}+\frac1{n_2}}.
+\]
+\end{templatebox}
+
+\begin{examplebox}[Week 2：小样本等方差 pooled t，Scalp wound 例题]
+Stapling 组：$\bar y_1=96.92,s_1=7.51,n_1=15$；suturing 组：
+$\bar y_2=96.31,s_2=8.06,n_2=16$。若假设两个正态总体方差相等：
+\[
+  s_p^2
+  =
+  \frac{14(7.51)^2+15(8.06)^2}{15+16-2}
+  \approx60.83.
+\]
+因此
+\[
+  \SE
+  =
+  \sqrt{60.83\left(\frac1{15}+\frac1{16}\right)}
+  \approx2.80,
+\]
+\[
+  t_{\mathrm{obs}}
+  =
+  \frac{96.92-96.31}{2.80}
+  \approx0.22,\qquad \nu=29.
+\]
+双尾 $\alpha=0.05$ 时，临界值约为 $t_{0.025,29}=2.045$。因为 $|0.22|<2.045$，不能拒绝 $H_0$。95\% CI：
+\[
+  0.61\pm2.045(2.80)
+  =
+  (-5.12,6.34).
+\]
+区间包含 0，因此也支持“没有足够证据说明两组均值不同”的结论。
+\end{examplebox}
+
+\begin{templatebox}[不等方差 Welch 推断]
+若题目说 variances unequal，或没有等方差假设而样本不大，优先用 Welch：
+\[
+  t_{\mathrm{obs}}
+  =
+  \frac{(\bar x_1-\bar x_2)-\Delta_0}
+  {\sqrt{s_1^2/n_1+s_2^2/n_2}}.
+\]
+自由度可由题目给出，或使用 Welch-Satterthwaite 近似：
+\[
+  \nu
+  =
+  \frac{(s_1^2/n_1+s_2^2/n_2)^2}
+  {
+  \dfrac{(s_1^2/n_1)^2}{n_1-1}
+  +
+  \dfrac{(s_2^2/n_2)^2}{n_2-1}
+  }.
+\]
+CI 同样为
+\[
+  (\bar x_1-\bar x_2)
+  \pm
+  t_{\alpha/2,\nu}
+  \sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}.
+\]
+\end{templatebox}
+
+\begin{warnbox}[Assignment 1 Q3 的口径]
+题面若写 “normal populations with unequal variances”，统计上应使用 Welch $t$。如果旧解答里又出现 pooled $t$ 路线，那是与题面不完全一致的旧作业写法。期末作答时按题目条件优先：equal variance 用 pooled；unequal variance 用 Welch。
+\end{warnbox}
+
+\subsection{配对样本}
+
+\begin{templatebox}[配对样本推断]
+构造差值
+\[
+  D_i=X_i-Y_i.
+\]
+然后把问题变成单总体均值：
+\[
+  \bar D\pm t_{\alpha/2,n-1}\frac{s_D}{\sqrt n},
+  \qquad
+  t_{\mathrm{obs}}=\frac{\bar D-D_0}{s_D/\sqrt n}.
+\]
+配对的关键词：same subjects, before-after, matched pairs。
+\end{templatebox}
+
+\begin{examplebox}[Week 2：paired samples，Mathematics evaluation 例题]
+若同一批学生前后两次测试形成差值 $d_i$，题目给
+\[
+  \bar d=1.77,\qquad s_d=1.48,\qquad n=13.
+\]
+检验两次测试是否有差异：
+\[
+  H_0:\mu_d=0,\qquad H_a:\mu_d\ne0.
+\]
+统计量为
+\[
+  t_{\mathrm{obs}}
+  =
+  \frac{1.77}{1.48/\sqrt{13}}
+  \approx4.31,\qquad \nu=12.
+\]
+双尾 $\alpha=0.05$ 时，$t_{0.025,12}=2.179$。因为 $|4.31|>2.179$，拒绝 $H_0$。95\% CI：
+\[
+  1.77\pm2.179\left(\frac{1.48}{\sqrt{13}}\right)
+  \approx
+  (0.88,2.66).
+\]
+配对题的核心不是比较两组原始均值，而是先变成差值 $D_i$ 的单均值问题。
+\end{examplebox}
+
+\subsection{总体比例}
+
+\begin{templatebox}[单总体比例]
+若 $X\sim\operatorname{Binomial}(n,p)$，$\hat p=X/n$。大样本 Wald CI：
+\[
+  \boxed{
+  \hat p\pm z_{\alpha/2}
+  \sqrt{\frac{\hat p(1-\hat p)}{n}}
+  }.
+\]
+检验 $H_0:p=p_0$ 时，标准误要用原假设下的 $p_0$：
+\[
+  Z_{\mathrm{obs}}
+  =
+  \frac{\hat p-p_0}
+  {\sqrt{p_0(1-p_0)/n}}.
+\]
+拒绝域按单尾或双尾选择。
+\end{templatebox}
+
+\begin{examplebox}[Week 3：单总体比例检验，diabetic foot 例题]
+样本中 $400$ 名 diabetics 有 $100$ 人有 diabetic foot：
+\[
+  \hat p=\frac{100}{400}=0.25.
+\]
+题目问是否可以认为总体比例为 20\%，可写成双尾检验：
+\[
+  H_0:p=0.20,\qquad H_a:p\ne0.20.
+\]
+检验时标准误使用 $p_0=0.20$：
+\[
+  \SE_0
+  =
+  \sqrt{\frac{0.20(1-0.20)}{400}}
+  =
+  0.02.
+\]
+所以
+\[
+  Z_{\mathrm{obs}}
+  =
+  \frac{0.25-0.20}{0.02}
+  =
+  2.50.
+\]
+在 $\alpha=0.05$ 双尾检验中，拒绝域为 $|Z|>1.96$。因为 $2.50>1.96$，拒绝 $H_0$，有足够证据说明总体比例不等于 20\%。
+\end{examplebox}
+
+\begin{templatebox}[两个独立总体比例]
+\[
+  \hat p_1=\frac{x_1}{n_1},
+  \qquad
+  \hat p_2=\frac{x_2}{n_2}.
+\]
+CI：
+\[
+  (\hat p_1-\hat p_2)
+  \pm
+  z_{\alpha/2}
+  \sqrt{
+    \frac{\hat p_1(1-\hat p_1)}{n_1}
+    +
+    \frac{\hat p_2(1-\hat p_2)}{n_2}
+  }.
+\]
+检验 $H_0:p_1-p_2=0$ 时用 pooled proportion：
+\[
+  \hat p_c=\frac{x_1+x_2}{n_1+n_2},
+  \qquad
+  Z_{\mathrm{obs}}
+  =
+  \frac{\hat p_1-\hat p_2}
+  {
+  \sqrt{\hat p_c(1-\hat p_c)(1/n_1+1/n_2)}
+  }.
+\]
+\end{templatebox}
+
+\subsection{正态总体方差区间}
+
+\begin{templatebox}[若题目要求方差的区间估计]
+正态样本下
+\[
+  \frac{(n-1)S^2}{\sigma^2}\sim\chi^2_{n-1}.
+\]
+若 $c_1$ 与 $c_2$ 满足
+\[
+  P(c_1<\chi^2_{n-1}<c_2)=1-\alpha,
+\]
+则
+\[
+  \boxed{
+  \left(
+    \frac{(n-1)S^2}{c_2},
+    \frac{(n-1)S^2}{c_1}
+  \right)
+  }
+\]
+是 $\sigma^2$ 的 $100(1-\alpha)\%$ CI。若题目要求形如 $(0,\mathrm{upper})$ 的单侧上界，用
+\[
+  P\!\left(\chi^2_{n-1}>c_1\right)=1-\alpha
+  \quad\Rightarrow\quad
+  \sigma^2<\frac{(n-1)S^2}{c_1}.
+\]
+\end{templatebox}
+
+\subsection{第一类错误与第二类错误}
+
+\begin{memorybox}[定义]
+\begin{itemize}
+  \item Type I error：$H_0$ 真实时错误拒绝 $H_0$。
+  \item Type II error：$H_a$ 真实时没有拒绝 $H_0$。
+  \item 显著性水平 $\alpha=P(\text{Type I error})$。
+\end{itemize}
+Power 在旧样卷中出现过，但按最新范围不考；若题目只要求解释错误类型，不需要计算 power。
+\end{memorybox}
+
+% ============================================================
+\section{Regression Modeling}
+% ============================================================
+
+\subsection{简单线性回归手算模板}
+
+\begin{methodbox}[给出汇总统计量时]
+模型：
+\[
+  Y_i=\beta_0+\beta_1x_i+\varepsilon_i.
+\]
+估计：
+\[
+  \hat\beta_1=\frac{S_{xy}}{S_{xx}},
+  \qquad
+  \hat\beta_0=\bar y-\hat\beta_1\bar x.
+\]
+拟合直线：
+\[
+  \hat y=\hat\beta_0+\hat\beta_1x.
+\]
+平方和：
+\[
+  SSR=\hat\beta_1S_{xy}=\frac{S_{xy}^2}{S_{xx}},
+  \qquad
+  SSE=S_{yy}-SSR.
+\]
+残差方差估计和残差标准误：
+\[
+  s_e^2=\frac{SSE}{n-2},
+  \qquad
+  s_e=\sqrt{s_e^2}.
+\]
+决定系数：
+\[
+  R^2=\frac{SSR}{SST}=1-\frac{SSE}{S_{yy}}.
+\]
+\end{methodbox}
+
+\begin{examplebox}[Week 4：教育-收入简单回归手算例题]
+设 $y$ 为收入（千美元），$x$ 为受教育年限。课件给出
+\[
+  n=10,\quad \sum x_i=118,\quad \sum y_i=302,
+\]
+\[
+  \sum x_i^2=1450,\quad \sum y_i^2=10072,\quad \sum x_iy_i=3779.
+\]
+先算中心化平方和：
+\[
+  S_{xx}
+  =
+  1450-\frac{118^2}{10}
+  =
+  57.6,
+\]
+\[
+  S_{xy}
+  =
+  3779-\frac{118\cdot302}{10}
+  =
+  215.4.
+\]
+因此
+\[
+  \hat\beta_1=\frac{215.4}{57.6}\approx3.74,
+  \qquad
+  \hat\beta_0=\bar y-\hat\beta_1\bar x
+  =
+  30.2-3.74(11.8)
+  \approx -13.93.
+\]
+拟合直线为
+\[
+  \boxed{\hat y=-13.93+3.74x.}
+\]
+斜率解释：平均来说，教育年限每增加一年，收入增加约 $3.74$ 千美元。截距为负，且 $x=0$ 不在合理解释范围内，因此不应作实质解释。
+
+若继续估计误差方差：
+\[
+  S_{yy}
+  =
+  10072-\frac{302^2}{10}
+  =
+  951.6,
+\]
+\[
+  SSE
+  =
+  S_{yy}-\frac{S_{xy}^2}{S_{xx}}
+  =
+  951.6-\frac{215.4^2}{57.6}
+  \approx146.09,
+\]
+\[
+  s_e^2=\frac{146.09}{10-2}\approx18.26,
+  \qquad
+  s_e\approx4.27.
+\]
+\end{examplebox}
+
+\begin{warnbox}[Week 4 baseball 例题：保留题型，不照搬错误数字]
+课件 baseball batting average 例题给出的原始汇总量约为
+\[
+  S_{xx}=0.001182,\qquad S_{xy}=0.003302.
+\]
+因此正确的斜率应为
+\[
+  \hat\beta_1=\frac{S_{xy}}{S_{xx}}
+  \approx
+  \frac{0.003302}{0.001182}
+  \approx2.794,
+\]
+截距约为
+\[
+  \hat\beta_0=\bar y-\hat\beta_1\bar x\approx-0.227.
+\]
+课件后续写成 $\hat\beta_1=0.7941$、$\hat\beta_0=0.2935$，与原始数据不一致。若考试出现类似题，以题目给出的原始数据或汇总量重新计算，不要机械背这个例题的数字。
+\end{warnbox}
+
+\begin{templatebox}[斜率检验与区间]
+检验
+\[
+  H_0:\beta_1=\beta_{1,0}.
+\]
+标准误：
+\[
+  \SE(\hat\beta_1)=\frac{s_e}{\sqrt{S_{xx}}}.
+\]
+统计量：
+\[
+  t_{\mathrm{obs}}
+  =
+  \frac{\hat\beta_1-\beta_{1,0}}{s_e/\sqrt{S_{xx}}},
+  \qquad
+  \nu=n-2.
+\]
+CI：
+\[
+  \hat\beta_1
+  \pm
+  t_{\alpha/2,n-2}\frac{s_e}{\sqrt{S_{xx}}}.
+\]
+若题目说 “higher $x$ leads to higher $y$”，通常是右尾：
+\[
+  H_0:\beta_1=0
+  \quad\text{vs.}\quad
+  H_a:\beta_1>0.
+\]
+\end{templatebox}
+
+\subsection{均值响应 CI 与单个预测 PI}
+
+\begin{templatebox}[Assignment 2 高频陷阱]
+给定 $x_0$，拟合值
+\[
+  \hat y_0=\hat\beta_0+\hat\beta_1x_0.
+\]
+若问 “average/mean response at $x_0$”，用均值响应 CI：
+\[
+  \boxed{
+  \hat y_0
+  \pm
+  t_{\alpha/2,n-2}s_e
+  \sqrt{
+    \frac1n+\frac{(x_0-\bar x)^2}{S_{xx}}
+  }
+  }.
+\]
+若问 “one individual/new observation at $x_0$”，用 prediction interval：
+\[
+  \boxed{
+  \hat y_0
+  \pm
+  t_{\alpha/2,n-2}s_e
+  \sqrt{
+    1+\frac1n+\frac{(x_0-\bar x)^2}{S_{xx}}
+  }
+  }.
+\]
+PI 一定比均值响应 CI 宽，因为多了新误差项的 $1$。
+\end{templatebox}
+
+\begin{methodbox}[Week 5：残差图、相关与 $R^2$ 的解释模板]
+若题目要求解释模型诊断，不需要写 R 代码，按以下语言作答：
+\begin{itemize}
+  \item 残差图若呈随机云状、无明显曲线趋势，线性关系假设较合理。
+  \item 残差随 $x$ 增大而散布变宽或变窄，提示 constant variance 可能不成立。
+  \item 残差直方图或正态图明显偏斜，提示 normal error assumption 可能不理想。
+  \item 相关系数 $r$ 只衡量线性关联强弱和方向，不直接证明因果关系。
+  \item 简单线性回归中 $R^2=r^2$；$R^2=0.65$ 可解释为约 65\% 的 $y$ 变异由线性模型中的 $x$ 解释。
+\end{itemize}
+这类解释题的关键是把统计语言写完整：assumption / evidence / conclusion。
+\end{methodbox}
+
+\subsection{最小二乘和残差性质}
+
+\begin{proofbox}[从 SSE 求正规方程]
+简单线性回归的
+\[
+  SSE(\beta_0,\beta_1)
+  =
+  \sum_{i=1}^n(y_i-\beta_0-\beta_1x_i)^2.
+\]
+对 $\beta_0,\beta_1$ 求偏导并令其为 0：
+\[
+  \frac{\partial SSE}{\partial \beta_0}
+  =
+  -2\sum_{i=1}^n(y_i-\hat\beta_0-\hat\beta_1x_i)=0,
+\]
+\[
+  \frac{\partial SSE}{\partial \beta_1}
+  =
+  -2\sum_{i=1}^nx_i(y_i-\hat\beta_0-\hat\beta_1x_i)=0.
+\]
+令 $e_i=y_i-\hat y_i$，得到
+\[
+  \boxed{\sum e_i=0},
+  \qquad
+  \boxed{\sum x_ie_i=0}.
+\]
+又因为 $\hat y_i=\hat\beta_0+\hat\beta_1x_i$，
+\[
+  \sum \hat y_ie_i
+  =
+  \hat\beta_0\sum e_i+\hat\beta_1\sum x_ie_i=0.
+\]
+\end{proofbox}
+
+\subsection{Week 9 标量证明模板}
+
+\begin{memorybox}[老师备课图的核心入口]
+把估计量写成 $Y_i$ 的线性组合：
+\[
+  a_i=\frac{x_i-\bar x}{S_{xx}},
+  \qquad
+  \hat\beta_1=\sum_{i=1}^na_iY_i,
+\]
+\[
+  b_i=\frac1n-\bar x a_i,
+  \qquad
+  \hat\beta_0=\sum_{i=1}^nb_iY_i.
+\]
+可直接使用的恒等式：
+\[
+  \sum a_i=0,\quad
+  \sum a_ix_i=1,\quad
+  \sum a_i^2=\frac1{S_{xx}},
+\]
+\[
+  \sum b_i=1,\quad
+  \sum b_ix_i=0,\quad
+  \sum b_i^2=\frac1n+\frac{\bar x^2}{S_{xx}},\quad
+  \sum a_ib_i=-\frac{\bar x}{S_{xx}}.
+\]
+\end{memorybox}
+
+\begin{proofbox}[无偏性、方差和协方差]
+若 $\E(Y_i)=\beta_0+\beta_1x_i$，$\Var(Y_i)=\sigma^2$，且 $Y_i$ 独立，则
+\[
+\begin{aligned}
+  \E(\hat\beta_1)
+  &=
+  \sum a_i\E(Y_i)
+  =
+  \beta_0\sum a_i+\beta_1\sum a_ix_i
+  =
+  \beta_1,\\
+  \E(\hat\beta_0)
+  &=
+  \sum b_i\E(Y_i)
+  =
+  \beta_0\sum b_i+\beta_1\sum b_ix_i
+  =
+  \beta_0.
+\end{aligned}
+\]
+方差：
+\[
+  \Var(\hat\beta_1)
+  =
+  \sum a_i^2\sigma^2
+  =
+  \frac{\sigma^2}{S_{xx}},
+\]
+\[
+  \Var(\hat\beta_0)
+  =
+  \sum b_i^2\sigma^2
+  =
+  \sigma^2\left(\frac1n+\frac{\bar x^2}{S_{xx}}\right).
+\]
+协方差：
+\[
+  \Cov(\hat\beta_0,\hat\beta_1)
+  =
+  \Cov\left(\sum b_iY_i,\sum a_iY_i\right)
+  =
+  \sigma^2\sum a_ib_i
+  =
+  -\frac{\sigma^2\bar x}{S_{xx}}.
+\]
+\end{proofbox}
+
+\begin{proofbox}[拟合均值和残差方差]
+令
+\[
+  \hat m(x_0)=\hat\beta_0+x_0\hat\beta_1.
+\]
+由无偏性：
+\[
+  \E\{\hat m(x_0)\}=\beta_0+\beta_1x_0.
+\]
+方差为
+\[
+\begin{aligned}
+  \Var\{\hat m(x_0)\}
+  &=
+  \Var(\hat\beta_0+x_0\hat\beta_1)\\
+  &=
+  \Var(\hat\beta_0)+x_0^2\Var(\hat\beta_1)
+  +2x_0\Cov(\hat\beta_0,\hat\beta_1)\\
+  &=
+  \sigma^2\left[
+    \frac1n+\frac{(x_0-\bar x)^2}{S_{xx}}
+  \right].
+\end{aligned}
+\]
+残差可写为
+\[
+  e_i=Y_i-\bar Y-(x_i-\bar x)\hat\beta_1.
+\]
+于是
+\[
+  \E(e_i)=
+  (\beta_0+\beta_1x_i)-(\beta_0+\beta_1\bar x)-(x_i-\bar x)\beta_1=0.
+\]
+令 $d_i=x_i-\bar x$。若题目给出或允许使用
+\[
+  \Var(Y_i-\bar Y)=\sigma^2\left(1-\frac1n\right),
+  \quad
+  \Cov(Y_i-\bar Y,\hat\beta_1)=\frac{d_i\sigma^2}{S_{xx}},
+  \quad
+  \Var(\hat\beta_1)=\frac{\sigma^2}{S_{xx}},
+\]
+则
+\[
+\begin{aligned}
+  \Var(e_i)
+  &=
+  \Var(Y_i-\bar Y-d_i\hat\beta_1)\\
+  &=
+  \sigma^2\left(1-\frac1n\right)
+  +d_i^2\frac{\sigma^2}{S_{xx}}
+  -2d_i\frac{d_i\sigma^2}{S_{xx}}\\
+  &=
+  \boxed{
+  \sigma^2\left[
+    1-\frac1n-\frac{(x_i-\bar x)^2}{S_{xx}}
+  \right]}.
+\end{aligned}
+\]
+\end{proofbox}
+
+\subsection{Multiple regression 理论模板}
+
+\begin{memorybox}[矩阵模型]
+\[
+  \by=\bX\bbeta+\bvarepsilon,
+  \qquad
+  \E(\bvarepsilon)=0,
+  \qquad
+  \Var(\bvarepsilon)=\sigma^2\bI.
+\]
+若 $\bX$ 满列秩：
+\[
+  \boxed{
+  \hat\bbeta=(\bX^T\bX)^{-1}\bX^T\by
+  }.
+\]
+\end{memorybox}
+
+\begin{proofbox}[估计量期望、方差和残差正交]
+\[
+\begin{aligned}
+  \E(\hat\bbeta)
+  &=
+  (\bX^T\bX)^{-1}\bX^T\E(\by)\\
+  &=
+  (\bX^T\bX)^{-1}\bX^T\bX\bbeta
+  =
+  \bbeta.
+\end{aligned}
+\]
+\[
+\begin{aligned}
+  \Var(\hat\bbeta)
+  &=
+  (\bX^T\bX)^{-1}\bX^T
+  \Var(\by)
+  \bX(\bX^T\bX)^{-1}\\
+  &=
+  \sigma^2(\bX^T\bX)^{-1}.
+\end{aligned}
+\]
+残差
+\[
+  \be=\by-\bX\hat\bbeta.
+\]
+正规方程给出
+\[
+  \boxed{\bX^T\be=0}.
+\]
+这表示残差与设计矩阵每一列正交；若第一列是截距列，则 $\sum e_i=0$。
+\end{proofbox}
+
+\begin{proofbox}[为什么正规方程矩阵可逆]
+若 $\bX$ 的列线性无关，且 $\bX^T\bX\mathbf a=0$，左乘 $\mathbf a^T$：
+\[
+  \mathbf a^T\bX^T\bX\mathbf a
+  =
+  \|\bX\mathbf a\|^2
+  =
+  0.
+\]
+因此 $\bX\mathbf a=0$。由于 $\bX$ 列线性无关，只能有 $\mathbf a=0$。所以 $\bX^T\bX$ 的零空间只有零向量，故可逆。
+\end{proofbox}
+
+\begin{methodbox}[给出正规方程的小型手算]
+旧样卷中有小型 normal equations 题。若出现：
+\[
+  (\bX^T\bX)\hat\bbeta=\bX^T\by,
+\]
+不要重新算所有矩阵，直接解线性方程组。答题顺序：
+\begin{enumerate}
+  \item 写出设计矩阵第一列为 1，后面是各 predictor。
+  \item 写 normal equations。
+  \item 解出 $\hat\beta_0,\hat\beta_1,\ldots$。
+  \item 写 fitted equation。
+  \item 预测时把新 $\mathbf x_0^T=(1,x_{01},\ldots,x_{0r})$ 代入：
+  \[
+    \hat y_0=\mathbf x_0^T\hat\bbeta.
+  \]
+\end{enumerate}
+录音确认 multiple regression 不考大规模数据集手算；若出现，多半会给出足够中间量。
+\end{methodbox}
+
+% ============================================================
+\section{MLE 推断}
+% ============================================================
+
+\subsection{MLE 标准流程}
+
+\begin{templatebox}[任何 MLE 题都按这个顺序写]
+\begin{enumerate}
+  \item 写单个观测的 pmf/pdf 和参数空间。
+  \item 利用独立性写 likelihood：
+  \[
+    L(\theta)=\prod_{i=1}^nf(y_i;\theta).
+  \]
+  \item 写 log-likelihood：
+  \[
+    \ell(\theta)=\log L(\theta).
+  \]
+  \item 求 score：
+  \[
+    U(\theta)=\frac{\partial\ell(\theta)}{\partial\theta}.
+  \]
+  \item 解 $U(\theta)=0$ 得候选 MLE。
+  \item 检查二阶导、端点或参数空间边界。
+  \item 写 Fisher 信息和近似推断：
+  \[
+    \hat\theta_{\mathrm{MLE}}\approx
+    N\left(\theta,\frac1{I_n(\theta)}\right),
+    \qquad
+    \widehat{\SE}(\hat\theta)=\frac1{\sqrt{I_n(\hat\theta)}}.
+  \]
+\end{enumerate}
+\end{templatebox}
+
+\begin{examplebox}[Week 12：硬币 MLE 与端点检查]
+独立抛硬币 10 次，观测到序列中有 6 次 heads、4 次 tails。令 $\theta=P(H)$，参数空间为
+\[
+  0\le \theta\le1.
+\]
+似然函数：
+\[
+  L(\theta)=\theta^6(1-\theta)^4.
+\]
+取对数：
+\[
+  \ell(\theta)=6\log\theta+4\log(1-\theta).
+\]
+score：
+\[
+  U(\theta)
+  =
+  \frac6\theta-\frac4{1-\theta}.
+\]
+令 $U(\theta)=0$：
+\[
+  \frac6\theta=\frac4{1-\theta}
+  \quad\Rightarrow\quad
+  6(1-\theta)=4\theta
+  \quad\Rightarrow\quad
+  \hat\theta=0.6.
+\]
+二阶导为
+\[
+  \ell''(\theta)
+  =
+  -\frac6{\theta^2}
+  -
+  \frac4{(1-\theta)^2}<0,
+\]
+所以内部临界点是最大点。还要检查端点：$L(0)=0$，$L(1)=0$，而 $L(0.6)>0$。因此
+\[
+  \boxed{\hat\theta_{\mathrm{MLE}}=0.6.}
+\]
+这个例题的考点不是计算难，而是答题时必须写参数空间，并说明最大值不是端点。
+\end{examplebox}
+
+\subsection{四类分布速查}
+
+\begin{center}
+\footnotesize
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.26\textwidth}
+>{\raggedright\arraybackslash}p{0.22\textwidth}
+>{\raggedright\arraybackslash}p{0.27\textwidth}
+>{\raggedright\arraybackslash}p{0.17\textwidth}@{}}
+\toprule
+模型 & MLE & Fisher 信息 & 标准误估计\\
+\midrule
+$Y_1,\ldots,Y_n\iid N(\mu,\sigma^2)$; $\sigma^2$ known
+& $\hat\mu=\bar Y$
+& $I_n(\mu)=n/\sigma^2$
+& $\sigma/\sqrt n$\\
+\addlinespace
+$Y_1,\ldots,Y_n\iid N(\mu,v)$; $v=\sigma^2$ unknown
+& $\hat\mu=\bar Y$; $\hat v=n^{-1}\sum(Y_i-\bar Y)^2$
+& $I(\mu,v)=
+\begin{pmatrix}
+n/v & 0\\
+0 & n/(2v^2)
+\end{pmatrix}$
+& $\widehat{\SE}(\hat\mu)=\sqrt{\hat v/n}$\\
+\addlinespace
+$Y\sim\operatorname{Binomial}(m,p)$
+& $\hat p=Y/m$
+& $I(p)=m/[p(1-p)]$
+& $\sqrt{\hat p(1-\hat p)/m}$\\
+\addlinespace
+$Y_1,\ldots,Y_n\iid\operatorname{Poisson}(\lambda)$
+& $\hat\lambda=\bar Y$
+& $I_n(\lambda)=n/\lambda$
+& $\sqrt{\hat\lambda/n}$\\
+\addlinespace
+$Y_1,\ldots,Y_n\iid\operatorname{Exponential}(\lambda)$，$\lambda$ 为 rate
+& $\hat\lambda=n/\sum Y_i=1/\bar Y$
+& $I_n(\lambda)=n/\lambda^2$
+& $\hat\lambda/\sqrt n$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Normal MLE}
+
+\begin{proofbox}[正态均值，方差已知]
+\[
+  \ell(\mu)
+  =
+  -\frac n2\log(2\pi\sigma^2)
+  -
+  \frac1{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2.
+\]
+\[
+  U(\mu)=\frac{\partial\ell}{\partial\mu}
+  =
+  \frac1{\sigma^2}\sum_{i=1}^n(y_i-\mu).
+\]
+令 $U(\mu)=0$：
+\[
+  \boxed{\hat\mu_{\mathrm{MLE}}=\bar y}.
+\]
+二阶导为 $-n/\sigma^2<0$，所以是最大值。Fisher 信息
+\[
+  I_n(\mu)=\frac n{\sigma^2}.
+\]
+\end{proofbox}
+
+\begin{proofbox}[正态均值和方差都未知]
+令 $v=\sigma^2$：
+\[
+  \ell(\mu,v)
+  =
+  -\frac n2\log(2\pi)
+  -\frac n2\log v
+  -\frac1{2v}\sum_{i=1}^n(y_i-\mu)^2.
+\]
+score：
+\[
+  \frac{\partial\ell}{\partial\mu}
+  =
+  \frac1v\sum(y_i-\mu),
+  \qquad
+  \frac{\partial\ell}{\partial v}
+  =
+  -\frac n{2v}
+  +
+  \frac1{2v^2}\sum(y_i-\mu)^2.
+\]
+解得
+\[
+  \boxed{\hat\mu=\bar y},
+  \qquad
+  \boxed{\hat v=\frac1n\sum_{i=1}^n(y_i-\bar y)^2}.
+\]
+注意 MLE 方差分母为 $n$，不是 $n-1$，因此它一般不是 $\sigma^2$ 的无偏估计。
+\end{proofbox}
+
+\subsection{Binomial MLE}
+
+\begin{proofbox}[二项分布单个观测]
+\[
+  L(p)=\binom myp^y(1-p)^{m-y},
+  \qquad
+  \ell(p)=\mathrm{const}+y\log p+(m-y)\log(1-p).
+\]
+\[
+  U(p)=\frac yp-\frac{m-y}{1-p}.
+\]
+令 $U(p)=0$：
+\[
+  y(1-p)-(m-y)p=0
+  \quad\Rightarrow\quad
+  \boxed{\hat p=\frac ym}.
+\]
+Fisher 信息：
+\[
+  I(p)=\frac{m}{p(1-p)}.
+\]
+若 $y=0$ 或 $y=m$，score 方程内部无根，应检查边界，MLE 分别为 $0$ 或 $1$；此时普通 Wald SE 可能失效。
+\end{proofbox}
+
+\subsection{Poisson MLE}
+
+\begin{proofbox}[Poisson rate]
+\[
+  L(\lambda)
+  =
+  \prod_{i=1}^n\frac{e^{-\lambda}\lambda^{y_i}}{y_i!},
+  \qquad
+  \ell(\lambda)
+  =
+  -n\lambda+\left(\sum y_i\right)\log\lambda-\sum\log(y_i!).
+\]
+\[
+  U(\lambda)
+  =
+  -n+\frac{\sum y_i}{\lambda}.
+\]
+令 $U(\lambda)=0$：
+\[
+  \boxed{\hat\lambda=\bar y}.
+\]
+Fisher 信息：
+\[
+  I_n(\lambda)=\frac n\lambda,
+  \qquad
+  \widehat{\SE}(\hat\lambda)=\sqrt{\frac{\hat\lambda}{n}}.
+\]
+Wald CI：
+\[
+  \hat\lambda\pm z_{\alpha/2}\sqrt{\frac{\hat\lambda}{n}}.
+\]
+\end{proofbox}
+
+\subsection{Exponential MLE}
+
+\begin{proofbox}[指数分布 rate 参数]
+若
+\[
+  f(y;\lambda)=\lambda e^{-\lambda y},
+  \qquad y>0,\lambda>0,
+\]
+则
+\[
+  \ell(\lambda)=n\log\lambda-\lambda\sum y_i.
+\]
+\[
+  U(\lambda)=\frac n\lambda-\sum y_i.
+\]
+令 $U(\lambda)=0$：
+\[
+  \boxed{\hat\lambda=\frac n{\sum y_i}=\frac1{\bar y}}.
+\]
+二阶导 $-n/\lambda^2<0$。Fisher 信息：
+\[
+  I_n(\lambda)=\frac n{\lambda^2},
+  \qquad
+  \widehat{\SE}(\hat\lambda)=\frac{\hat\lambda}{\sqrt n}.
+\]
+\end{proofbox}
+
+\begin{memorybox}[rate 与 scale 不要混]
+若
+\[
+  f(y;\lambda)=\lambda e^{-\lambda y},
+\]
+则 $\lambda$ 是 rate，$\hat\lambda=1/\bar y$。
+
+若
+\[
+  f(y;\beta)=\frac1\beta e^{-y/\beta},
+\]
+则 $\beta$ 是 mean/scale，$\hat\beta=\bar y$。
+\end{memorybox}
+
+% ============================================================
+\section{证明题清单}
+% ============================================================
+
+\begin{longtable}{p{0.28\textwidth}p{0.35\textwidth}p{0.27\textwidth}}
+\toprule
+可能证明 & 开头怎么写 & 关键结论\\
+\midrule
+MSE 分解 & $\hat\theta-\theta=(\hat\theta-\E\hat\theta)+(\E\hat\theta-\theta)$ & $\MSE=\Var+\Bias^2$\\
+样本均值无偏 & $\E(\bar Y)=n^{-1}\sum\E(Y_i)$ & $\E(\bar Y)=\mu$\\
+样本方差无偏 & 展开 $\sum(Y_i-\bar Y)^2$ & $\E(S^2)=\sigma^2$\\
+组合估计量无偏和最优权重 & 先算 $\E(T_a)$，再最小化 $\Var(T_a)$ & $a^*=(V_2-C)/(V_1+V_2-2C)$\\
+单均值 CI 来自 pivot & 写 $(\bar X-\mu)/(\sigma/\sqrt n)$ 或 $t$ pivot & 反解 $\mu$\\
+方差 CI 来自 $\chi^2$ pivot & 写 $(n-1)S^2/\sigma^2$ & 反解 $\sigma^2$\\
+OLS 残差性质 & 对 SSE 求导或用 $\bX^T\be=0$ & $\sum e_i=0,\sum x_ie_i=0$\\
+Week 9 估计量性质 & 写 $\hat\beta_1=\sum a_iY_i,\hat\beta_0=\sum b_iY_i$ & 无偏、方差、协方差\\
+残差期望与方差 & 写 $e_i=Y_i-\bar Y-(x_i-\bar x)\hat\beta_1$ & $\E(e_i)=0$，$\Var(e_i)=\sigma^2(1-h_{ii})$\\
+多元 OLS 无偏与方差 & 写 $\hat\bbeta=(\bX^T\bX)^{-1}\bX^T\by$ & $\E(\hat\bbeta)=\bbeta$，$\Var=\sigma^2(\bX^T\bX)^{-1}$\\
+MLE 推导 & 写 $\ell$ 和 score & 解 score 并检查最大值\\
+\bottomrule
+\end{longtable}
+
+% ============================================================
+\section{考场检查表}
+% ============================================================
+
+\begin{memorybox}[交卷前逐项检查]
+\begin{enumerate}
+  \item 每道推断题是否写清楚参数含义？
+  \item CI 的标准误是否和检验标准误一致？比例检验是否用 $p_0$？
+  \item 单尾方向是否与题目中的 “greater than / less than / different” 一致？
+  \item 两样本题是否先判断 independent / paired、pooled / Welch？
+  \item 回归预测题是否区分 mean response CI 与 individual prediction PI？
+  \item 回归残差证明是否写了正规方程或 $\bX^T\be=0$？
+  \item Week 9 证明是否先写 $a_i,b_i$ 线性组合？
+  \item MLE 是否写参数空间、log-likelihood、score、边界或二阶导检查？
+  \item Fisher 信息是一个观测的 $I(\theta)$ 还是样本总信息 $I_n(\theta)$？
+  \item 最终结论是否回到题目语境，并避免 “accept $H_0$”？
+\end{enumerate}
+\end{memorybox}
+
+\begin{warnbox}[不要在期末主动展开的内容]
+除非题目明确给出并要求，否则不主动写 ANOVA、R code、P-value、Power、polynomial regression、nested-model comparison。旧材料里这些内容是历史题型，不是当前最高优先级。
+\end{warnbox}
+
+\end{document}

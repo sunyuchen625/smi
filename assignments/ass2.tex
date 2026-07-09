@@ -1,0 +1,170 @@
+\documentclass[11pt, a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{top=1in, bottom=1in, left=1in, right=1in}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{verbatim}
+\usepackage{xcolor}
+
+% Setup for R code block styling
+\usepackage{listings}
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    numbers=none,
+    keepspaces=true
+}
+
+\title{\textbf{SM\&I - Assignment 2}}
+\author{Yuchen Sun / 24220003069}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+% ---------------------------------------------------------
+% QUESTION 1
+% ---------------------------------------------------------
+\section*{Question 1}
+
+\subsection*{1. RStudio Console Output}
+\begin{lstlisting}
+> income <- c(25, 33, 22, 41, 18, 28, 32, 24, 53, 26)
+> education <- c(11, 12, 11, 15, 8, 10, 11, 12, 17, 11)
+> 
+> # Fit the linear regression model
+> model_q1 <- lm(income ~ education)
+> summary(model_q1)
+
+Call:
+lm(formula = income ~ education)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-6.9479 -1.9583  0.4219  3.0286  4.7917 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -13.9271     6.7802  -2.054 0.074038 .  
+education     3.7396     0.5631   6.641 0.000162 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 4.273 on 8 degrees of freedom
+Multiple R-squared:  0.8465,	Adjusted R-squared:  0.8273 
+F-statistic: 44.11 on 1 and 8 DF,  p-value: 0.0001622
+
+> new_edu <- data.frame(education = 16)
+> predict(model_q1, new_edu, interval = "confidence", level = 0.90)
+       fit     lwr     upr
+1 45.90625 40.8413 50.9712
+> predict(model_q1, new_edu, interval = "prediction", level = 0.90)
+       fit      lwr      upr
+1 45.90625 36.48281 55.32969
+\end{lstlisting}
+
+\subsection*{2. Discussion and Conclusion}
+
+\textbf{a) LS Regression Line}\\
+Based on the R output, the estimated intercept ($b_0$) is $-13.9271$ and the estimated slope ($b_1$) is $3.7396$. The Least Squares Regression Line for income on education level is:
+\[ \widehat{\text{Income}} = -13.9271 + 3.7396 \times \text{Education} \]
+This implies that for every additional year of education, the individual's income is expected to increase by approximately $\$3,739.6$.
+
+\textbf{b) Standard Error of Estimate}\\
+The standard error of the estimate ($S_e$), which measures the typical distance between the observed values and the regression line, is found in the output as the "Residual standard error". 
+\[ S_e = 4.273 \text{ (in \$1000s)} \]
+
+\textbf{c) Hypothesis Testing}\\
+We want to test if higher education leads to higher income. 
+\begin{itemize}
+    \item Null Hypothesis ($H_0$): $\beta_1 \le 0$ (Education does not increase income).
+    \item Alternative Hypothesis ($H_a$): $\beta_1 > 0$ (Higher education leads to higher income).
+\end{itemize}
+From the output, the two-tailed p-value for the slope is $0.000162$. But since we are conducting a one-tailed test (checking if it is "higher"), the one-tailed p-value is $0.000162 / 2 = 0.000081$. 
+It is much less than the significance level $\alpha = 0.05$, thus we strongly \textbf{reject the null hypothesis}. \\
+That is, the data provide sufficient evidence at the 5\% significance level to conclude that a higher education level leads to a higher income.
+
+\textbf{d) Prediction Interval}\\
+For an individual with 16 years of education, the predicted income is $45.90625$ ($\$45,906.25$). 
+The question asks for the interval of "an individual", which in fact usually requires a \textbf{Prediction Interval} rather than a confidence interval for the mean. 
+\begin{itemize}
+    \item The 90\% \textbf{Confidence Interval} (for the average income of all people with 16 years of education) is $[40.84, 50.97]$ (in \$1000s).
+    \item The 90\% \textbf{Prediction Interval} (for a single individual) is $[36.48, 55.33]$ (in \$1000s).
+\end{itemize}
+Thus, we can be 90\% confident that a specific individual with 16 years of education will have an income between $\$36,482.81$ and $\$55,329.69$.
+
+\newpage
+
+% ---------------------------------------------------------
+% QUESTION 2
+% ---------------------------------------------------------
+\section*{Question 2}
+
+\subsection*{1. RStudio Console Output}
+\begin{lstlisting}
+> batting <- c(0.254, 0.269, 0.255, 0.262, 0.254, 0.247, 0.264, 0.271, 0.280, 0.256, 0.248, 0.255, 0.270, 0.257)
+> winning <- c(0.414, 0.519, 0.500, 0.537, 0.352, 0.519, 0.506, 0.512, 0.586, 0.438, 0.519, 0.512, 0.525, 0.562)
+> 
+> # Fit the linear regression model
+> model_q2 <- lm(winning ~ batting)
+> summary(model_q2)
+
+Call:
+lm(formula = winning ~ batting)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.130908 -0.015261  0.005842  0.031416  0.070710 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)  -0.2268     0.4292  -0.528    0.607
+batting       2.7941     1.6490   1.694    0.116
+
+Residual standard error: 0.05669 on 12 degrees of freedom
+Multiple R-squared:  0.1931,	Adjusted R-squared:  0.1258 
+F-statistic: 2.871 on 1 and 12 DF,  p-value: 0.116
+
+> new_batting <- data.frame(batting = 0.275)
+> predict(model_q2, new_batting, interval = "confidence", level = 0.90)
+        fit       lwr      upr
+1 0.5415841 0.4902453 0.592923
+> predict(model_q2, new_batting, interval = "prediction", level = 0.90)
+        fit       lwr     upr
+1 0.5415841 0.4282583 0.65491
+\end{lstlisting}
+
+\subsection*{2. Discussion and Conclusion}
+
+\textbf{a) LS Regression Line}\\
+Based on the R output, the estimated intercept ($b_0$) is $-0.2268$ and the estimated slope ($b_1$) is $2.7941$. The Least Squares Regression Line for winning percentage on batting average is:
+\[ \widehat{\text{Winning\%}} = -0.2268 + 2.7941 \times \text{Batting\_Average} \]
+
+\textbf{b) Standard Error of Estimate}\\
+The standard error of the estimate ($S_e$) is found in the output as the "Residual standard error".
+\[ S_e = 0.05669 \]
+
+\textbf{c) Hypothesis Testing}\\
+We want to test if a higher team batting average leads to a higher winning percentage.
+\begin{itemize}
+    \item Null Hypothesis ($H_0$): $\beta_1 \le 0$
+    \item Alternative Hypothesis ($H_a$): $\beta_1 > 0$ (Higher batting average leads to higher winning percentage).
+\end{itemize}
+From the output, the two-tailed p-value for the slope is $0.116$. Because our alternative hypothesis is directional (one-tailed test), the corresponding one-tailed p-value is calculated as $0.116 / 2 = 0.058$. It is greater than the significance level $\alpha = 0.05$, so we \textbf{fail to reject the null hypothesis}. \\
+That is, the data do not provide sufficient evidence at the 5\% significance level to conclude that a higher team batting average leads to a higher winning percentage.
+
+\textbf{d) Prediction Interval}\\
+For a team with a batting average of $0.275$, the predicted winning percentage is $0.5416$ (or $54.16\%$).
+Similar with 1d), although the question wants us to find the "confidence interval", since "a team" refers to an individual data point, the \textbf{Prediction Interval} might be a better statistical measure. Here we list both of them.
+\begin{itemize}
+    \item The 90\% \textbf{Confidence Interval} (for the true mean winning percentage of all teams with a 0.275 batting average) is $[0.4902, 0.5929]$.
+    \item The 90\% \textbf{Prediction Interval} (for one specific team with a 0.275 batting average) is $[0.4283, 0.6549]$.
+\end{itemize}
+Therefore, we can predict with 90\% confidence that the winning percentage of a specific team whose batting average is 0.275 will fall between $42.83\%$ and $65.49\%$.
+
+\end{document}

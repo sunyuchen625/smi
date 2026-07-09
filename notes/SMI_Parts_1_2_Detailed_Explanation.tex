@@ -1,0 +1,1159 @@
+% !TEX program = xelatex
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[UTF8,fontset=none]{ctex}
+\setCJKmainfont[BoldFont=Heiti SC,ItalicFont=Songti SC]{Songti SC}
+\setCJKsansfont{Heiti SC}
+\setCJKmonofont{Heiti SC}
+
+\usepackage{amsmath,amssymb,amsfonts,mathtools}
+\usepackage{booktabs,array,tabularx}
+\usepackage[margin=1.9cm]{geometry}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.48em}
+\setlist[itemize]{leftmargin=*,topsep=2pt,itemsep=2pt}
+\setlist[enumerate]{leftmargin=*,topsep=2pt,itemsep=2pt}
+\allowdisplaybreaks
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small Statistical Modelling and Inference}
+\rhead{\small 第 1--2 部分详细讲解}
+\cfoot{\thepage}
+
+\hypersetup{
+  pdftitle={SMI Parts 1 and 2 Detailed Explanation},
+  pdfauthor={Prepared from SMI Final Review 2026}
+}
+
+\newcommand{\E}{\operatorname{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Bias}{\operatorname{Bias}}
+\newcommand{\MSE}{\operatorname{MSE}}
+\newcommand{\SE}{\operatorname{SE}}
+\newcommand{\iid}{\overset{\mathrm{iid}}{\sim}}
+
+\newtcolorbox{goalbox}[1][]{
+  colback=gray!5!white,colframe=gray!65!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{conceptbox}[1][]{
+  colback=blue!4!white,colframe=blue!60!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{intuitionbox}[1][]{
+  colback=cyan!4!white,colframe=cyan!60!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{methodbox}[1][]{
+  colback=green!4!white,colframe=green!55!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{examplebox}[1][]{
+  colback=orange!6!white,colframe=orange!75!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{proofbox}[1][]{
+  colback=violet!4!white,colframe=violet!60!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{warnbox}[1][]{
+  colback=red!4!white,colframe=red!60!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+\newtcolorbox{summarybox}[1][]{
+  colback=yellow!7!white,colframe=Goldenrod!75!black,
+  fonttitle=\bfseries,title=#1,breakable
+}
+
+\title{\textbf{Statistical Modelling and Inference}\\[0.3em]
+第 1、2 部分详细易懂讲解}
+\author{对应《SMI 2026 期末复习讲义》第 1--2 章}
+\date{June 2026}
+
+\begin{document}
+\maketitle
+
+\begin{goalbox}[阅读目标]
+完成本讲解后，应能够：
+\begin{enumerate}
+  \item 区分总体参数、统计量、估计量与估计值；
+  \item 解释抽样分布和标准误，而不是只背公式；
+  \item 面对均值或比例推断题时，先判断参数与研究设计，再选择方法；
+  \item 判断估计量是否无偏，计算 Bias、Variance 与 MSE；
+  \item 证明 MSE 的偏差--方差分解；
+  \item 构造无偏估计量，并合并多个无偏估计量；
+  \item 解释样本均值为何无偏，以及样本方差为何使用分母 $n-1$。
+\end{enumerate}
+\end{goalbox}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{第 1 部分：全课程主线与做题决策}
+% ============================================================
+
+\subsection{统计推断究竟在做什么}
+
+统计问题通常具有一个根本矛盾：
+\[
+  \boxed{\text{我们关心整个总体，但只能观察总体中的一个样本。}}
+\]
+
+例如，我们可能想知道全校学生的平均睡眠时长 $\mu$。真实的 $\mu$ 在调查前就已经由总体决定，但我们无法询问所有学生，只能随机抽取 $n$ 人并计算样本均值 $\bar X$。统计推断所做的事情，就是利用样本中可观察的信息，对不可观察的总体参数作出有不确定性说明的结论。
+
+\[
+  \boxed{
+  \text{总体参数未知}
+  \quad \xleftarrow{\quad\text{抽样分布}\quad}\quad
+  \text{样本统计量可观察}.
+  }
+\]
+
+\begin{conceptbox}[参数固定，样本与统计量随机]
+在频率学派的框架中：
+\begin{itemize}
+  \item 总体参数 $\theta$ 是\textbf{固定但未知}的数；
+  \item 随机样本 $X_1,\ldots,X_n$ 在抽样前是随机变量；
+  \item 由样本计算的统计量 $T=g(X_1,\ldots,X_n)$ 也在抽样前是随机变量；
+  \item 数据观察完成后，统计量取得一个具体数值。
+\end{itemize}
+因此，“$\theta$ 的概率是多少”通常不是频率学派问题；我们研究的是估计方法在重复抽样中的表现。
+\end{conceptbox}
+
+\subsection{总体、样本、参数与统计量}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{p{3.1cm}p{3.5cm}X}
+\toprule
+概念 & 含义 & 例子\\
+\midrule
+总体 population & 研究所关心的全部对象或概率机制
+& 全校学生；某机器未来生产的所有零件\\
+样本 sample & 从总体中实际观察的一组数据
+& 随机抽取的 50 名学生的睡眠时长\\
+参数 parameter & 描述总体的固定未知数
+& 总体均值 $\mu$、方差 $\sigma^2$、比例 $p$\\
+统计量 statistic & 只由样本计算、不含未知参数的函数
+& $\bar X$、$S^2$、$\hat p$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warnbox}[统计量不能含未知参数]
+例如
+\[
+  \bar X=\frac1n\sum_{i=1}^nX_i
+\]
+是统计量，因为它只依赖样本；$\bar X-\mu$ 含未知参数，因此不是统计量。
+\end{warnbox}
+
+\subsection{Estimator、Estimate 与 Estimand}
+
+这三个词很相似，但扮演不同角色：
+
+\begin{itemize}
+  \item \textbf{Estimand（被估计对象）}：真正想知道的总体量，例如 $\mu$ 或 $p$；
+  \item \textbf{Estimator（估计量）}：用于估计参数的随机规则，例如 $\bar X$；
+  \item \textbf{Estimate（估计值）}：把观测数据代入估计量后得到的具体数值，例如 $\bar x=7.2$。
+\end{itemize}
+
+\begin{examplebox}[同一估计量，不同样本会产生不同估计值]
+设总体均值为未知参数 $\mu$，使用估计量
+\[
+  \hat\mu=\bar X.
+\]
+第一次抽到数据 $(5,7,9)$，得到
+\[
+  \bar x=7.
+\]
+第二次抽到数据 $(4,6,8)$，得到
+\[
+  \bar x=6.
+\]
+两次使用的是同一个\textbf{估计量} $\bar X$，但产生了不同的\textbf{估计值}。这正是估计量具有抽样分布的原因。
+\end{examplebox}
+
+\subsection{抽样分布：连接样本与总体的桥梁}
+
+想象我们从同一个总体中反复抽取大小均为 $n$ 的随机样本。每次都计算同一个统计量，例如 $\bar X$。这些可能的 $\bar X$ 值形成的概率分布，称为 $\bar X$ 的\textbf{抽样分布（sampling distribution）}。
+
+\begin{intuitionbox}[不要把三个分布混在一起]
+\begin{itemize}
+  \item \textbf{总体分布}：单个个体 $X$ 如何变化；
+  \item \textbf{样本的经验分布}：这一次实际数据如何分布；
+  \item \textbf{统计量的抽样分布}：重复抽样时，$\bar X$、$\hat p$ 等如何变化。
+\end{itemize}
+置信区间和假设检验主要依赖第三种分布。
+\end{intuitionbox}
+
+若 $X_1,\ldots,X_n$ 独立同分布，且
+\[
+  \E(X_i)=\mu,
+  \qquad
+  \Var(X_i)=\sigma^2,
+\]
+则
+\[
+  \E(\bar X)=\mu,
+  \qquad
+  \Var(\bar X)=\frac{\sigma^2}{n}.
+\]
+因此 $\bar X$ 的标准差为
+\[
+  \boxed{\SE(\bar X)=\frac{\sigma}{\sqrt n}.}
+\]
+
+\begin{conceptbox}[标准差与标准误的区别]
+\begin{itemize}
+  \item $\sigma$ 或 $s$ 描述\textbf{个体观测}之间的差异；
+  \item $\SE(\bar X)$ 描述\textbf{样本均值}在重复抽样中的波动。
+\end{itemize}
+样本量变大不会让个体差异自动消失，但会让样本均值更稳定。由于
+\[
+  \SE(\bar X)=\frac{\sigma}{\sqrt n},
+\]
+若希望标准误缩小一半，样本量需要扩大到原来的四倍。
+\end{conceptbox}
+
+\subsection{为什么推断题必须先定义参数}
+
+公式选择取决于你究竟想回答什么问题。以下问题看起来都在比较数据，但目标参数不同：
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{p{6.0cm}p{3.0cm}X}
+\toprule
+研究问题 & 目标参数 & 典型估计量\\
+\midrule
+一个总体的平均值是多少？ & $\mu$ & $\bar X$\\
+两个独立总体的平均值相差多少？ & $\mu_1-\mu_2$ & $\bar X_1-\bar X_2$\\
+同一批对象干预前后平均变化多少？ & $\mu_d$ & $\bar D$\\
+总体中成功或支持的比例是多少？ & $p$ & $\hat p=X/n$\\
+两个总体比例相差多少？ & $p_1-p_2$ & $\hat p_1-\hat p_2$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{methodbox}[定义参数的标准写法]
+不要只写“检验两个均值是否相同”。更完整的写法是：
+\[
+  \mu_1=\text{总体 1 的平均响应},
+  \qquad
+  \mu_2=\text{总体 2 的平均响应},
+\]
+目标参数为 $\mu_1-\mu_2$。参数定义清楚后，假设、标准误、置信区间和语境结论才不会混乱。
+\end{methodbox}
+
+\subsection{研究设计优先于公式：独立样本还是配对样本}
+
+两组数据并不自动意味着两个独立样本。关键问题是：\textbf{两组观测之间是否存在一一对应关系？}
+
+\begin{itemize}
+  \item 不同学生被随机分入两种教学方法：通常是两个独立样本；
+  \item 同一批学生课程前后各测一次：配对样本；
+  \item 双胞胎按对分到两个处理组：配对样本；
+  \item 从两个互不重叠的人群分别抽样：通常是独立样本。
+\end{itemize}
+
+配对数据应先定义差值
+\[
+  D_i=X_{1i}-X_{2i},
+\]
+再把问题转化为对单总体均值 $\mu_d$ 的推断。若错误地把配对数据当作独立样本，会忽略配对关系携带的信息，并使用错误的标准误。
+
+\begin{examplebox}[设计判断]
+某研究记录 30 名患者服药前后的血压。虽然有“服药前”和“服药后”两列数据，但每个服药后观测都对应同一患者的服药前观测，因此这是配对设计。目标参数是
+\[
+  \mu_d=\E(\text{服药后血压}-\text{服药前血压}).
+\]
+正确做法是分析 30 个差值，而不是把两列当作两个独立样本。
+\end{examplebox}
+
+\subsection{\texorpdfstring{$Z$ 与 $t$：为什么总体方差未知时会改变参考分布}{Z 与 t：为什么总体方差未知时会改变参考分布}}
+
+若总体正态且总体标准差 $\sigma$ 已知，则
+\[
+  Z
+  =
+  \frac{\bar X-\mu}{\sigma/\sqrt n}
+  \sim N(0,1).
+\]
+
+实际中 $\sigma$ 常常未知，只能用样本标准差 $S$ 替代：
+\[
+  T
+  =
+  \frac{\bar X-\mu}{S/\sqrt n}.
+\]
+分母 $S$ 本身也是随机的，因此统计量比标准正态具有更厚的尾部。在总体正态条件下，
+\[
+  \boxed{
+  T\sim t_{n-1}.
+  }
+\]
+
+\begin{intuitionbox}[为什么样本量大时 $t$ 越来越接近 $Z$]
+样本量较小时，$S$ 对 $\sigma$ 的估计不够稳定，替换 $\sigma$ 带来较多额外不确定性，因此 $t$ 分布尾部更厚。样本量增大后，$S$ 越来越稳定，额外不确定性减小，$t$ 分布逐渐接近标准正态。
+\end{intuitionbox}
+
+\subsection{方法选择的逐步决策}
+
+\begin{methodbox}[任何均值或比例推断题的决策顺序]
+\begin{enumerate}
+  \item \textbf{定义目标参数}：$\mu$、$\mu_1-\mu_2$、$\mu_d$、$p$ 或 $p_1-p_2$？
+  \item \textbf{识别设计}：单样本、两个独立样本，还是配对样本？
+  \item \textbf{识别信息与条件}：方差是否已知？样本量大小？是否可假设正态或使用大样本近似？
+  \item \textbf{选择标准误}：标准误必须与目标估计量相匹配。
+  \item \textbf{选择参考分布}：标准正态 $Z$ 还是某个自由度的 $t$？
+  \item \textbf{计算并解释}：最后才代数值，并用总体参数的语言写结论。
+\end{enumerate}
+\end{methodbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.23}
+\begin{tabularx}{\textwidth}{p{2.3cm}p{4.0cm}X}
+\toprule
+目标 & 主要情形 & 核心方法\\
+\midrule
+$\mu$ & $\sigma$ 已知 & $Z$，标准误 $\sigma/\sqrt n$\\
+$\mu$ & $\sigma$ 未知、总体正态 & $t_{n-1}$，标准误 $s/\sqrt n$\\
+$\mu_1-\mu_2$ & 独立、小样本、正态、等方差 & pooled $t$\\
+$\mu_1-\mu_2$ & 独立、不假设等方差 & Welch $t$；按课程或题目要求使用\\
+$\mu_d$ & 配对数据 & 对差值做单样本 $t$\\
+$p$ & 单总体比例、大样本 & 正态近似；CI 与检验标准误不同\\
+$p_1-p_2$ & 两个独立比例、大样本 & CI 不合并；等比例检验时合并\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{条件检查不是装饰}
+
+推断公式来自特定概率模型。若条件明显不满足，公式给出的置信水平或错误概率就可能失真。
+
+\begin{itemize}
+  \item \textbf{随机性或代表性}：样本应能代表目标总体；
+  \item \textbf{独立性}：一个观测不应决定另一个观测，除非明确建模配对结构；
+  \item \textbf{正态性}：小样本均值 $t$ 推断常依赖总体近似正态；
+  \item \textbf{大样本条件}：比例正态近似需要有足够的成功与失败数；
+  \item \textbf{等方差条件}：pooled $t$ 需要两个总体方差相等。
+\end{itemize}
+
+\begin{warnbox}[“样本量大”不能修复所有问题]
+大样本有助于正态近似，但不能自动修复严重选择偏差、错误配对、观测依赖或测量错误。统计方法只能量化模型中承认的不确定性，不能消除糟糕研究设计带来的系统问题。
+\end{warnbox}
+
+\subsection{三个方法选择示例}
+
+\begin{examplebox}[示例 1：单总体均值]
+随机抽取 16 个来自正态总体的观测，总体方差未知，希望估计总体均值 $\mu$。
+
+\textbf{判断：}
+\[
+  \text{单样本}
+  \quad+\quad
+  \sigma\text{ 未知}
+  \quad+\quad
+  \text{总体正态}
+  \quad\Longrightarrow\quad
+  t_{15}.
+\]
+标准误为 $s/\sqrt{16}$。
+\end{examplebox}
+
+\begin{examplebox}[示例 2：两个均值]
+分别从两个独立正态总体抽取小样本，题目明确说明总体方差相同，希望研究 $\mu_1-\mu_2$。
+
+\textbf{判断：}
+\[
+  \text{两个独立样本}
+  \quad+\quad
+  \text{小样本正态}
+  \quad+\quad
+  \text{等方差}
+  \quad\Longrightarrow\quad
+  \text{pooled }t.
+\]
+应先计算合并方差 $s_p^2$，自由度为 $n_1+n_2-2$。
+\end{examplebox}
+
+\begin{examplebox}[示例 3：总体比例]
+随机调查 200 人，其中 116 人支持某提议，希望估计总体支持比例 $p$。
+
+点估计为
+\[
+  \hat p=\frac{116}{200}=0.58.
+\]
+比例置信区间使用
+\[
+  \sqrt{\frac{\hat p(1-\hat p)}{n}}.
+\]
+若检验 $H_0:p=0.5$，则检验标准误应在原假设下计算：
+\[
+  \sqrt{\frac{0.5(1-0.5)}{n}}.
+\]
+两者不能混用。
+\end{examplebox}
+
+\begin{summarybox}[第 1 部分的核心]
+统计推断不是“看到题型就找公式”，而是：
+\[
+  \boxed{
+  \text{定义参数}
+  \longrightarrow
+  \text{识别设计}
+  \longrightarrow
+  \text{确定抽样分布与标准误}
+  \longrightarrow
+  \text{计算并解释}.
+  }
+\]
+只要前面三步正确，公式通常自然出现；若前面判断错误，即使计算完全正确，结论仍可能无效。
+\end{summarybox}
+
+% ============================================================
+\section{第 2 部分：无偏估计、偏差与均方误差}
+% ============================================================
+
+\subsection{评价估计量：中心位置与波动程度}
+
+估计量 $\hat\theta$ 是随机变量。评价它时，至少要问两个问题：
+\begin{enumerate}
+  \item 它在重复抽样中的平均位置是否接近真实参数 $\theta$？
+  \item 它在不同样本之间是否稳定？
+\end{enumerate}
+
+第一个问题对应\textbf{偏差（bias）}，第二个问题对应\textbf{方差（variance）}。
+
+\subsection{偏差与无偏性}
+
+定义
+\[
+  \boxed{
+  \Bias(\hat\theta)
+  =
+  \E(\hat\theta)-\theta.
+  }
+\]
+
+\begin{itemize}
+  \item $\Bias(\hat\theta)>0$：估计量长期平均偏高；
+  \item $\Bias(\hat\theta)<0$：估计量长期平均偏低；
+  \item $\Bias(\hat\theta)=0$：估计量无偏。
+\end{itemize}
+
+\[
+  \boxed{
+  \hat\theta\text{ 无偏}
+  \quad\Longleftrightarrow\quad
+  \E(\hat\theta)=\theta.
+  }
+\]
+
+\begin{intuitionbox}[无偏不代表每次都估得准确]
+若 $\hat\theta$ 有时严重高估、有时严重低估，只要长期平均恰好等于 $\theta$，它仍然无偏。因此无偏性只描述估计量分布的\textbf{中心位置}，不描述分布有多分散。
+\end{intuitionbox}
+
+\begin{examplebox}[一个无偏但可能很不稳定的估计量]
+设 $X_1,\ldots,X_n$ 的均值均为 $\mu$。则
+\[
+  T=X_1
+\]
+也是 $\mu$ 的无偏估计量，因为
+\[
+  \E(T)=\E(X_1)=\mu.
+\]
+但它只使用了第一个观测，方差为 $\sigma^2$。相比之下，
+\[
+  \bar X=\frac1n\sum X_i
+\]
+同样无偏，但方差仅为 $\sigma^2/n$。因此“无偏”不足以判断估计量是否优秀。
+\end{examplebox}
+
+\subsection{均方误差 MSE：总体准确性的度量}
+
+估计误差为
+\[
+  \hat\theta-\theta.
+\]
+若直接取期望，正负误差可能互相抵消。因此使用平方误差：
+\[
+  \boxed{
+  \MSE(\hat\theta)
+  =
+  \E\bigl[(\hat\theta-\theta)^2\bigr].
+  }
+\]
+
+MSE 越小，表示估计量通常越接近真实参数。平方还会对较大的错误施加更重惩罚。
+
+\subsection{MSE 的偏差--方差分解}
+
+最重要的恒等式是
+\[
+  \boxed{
+  \MSE(\hat\theta)
+  =
+  \Var(\hat\theta)
+  +
+  \bigl[\Bias(\hat\theta)\bigr]^2.
+  }
+\]
+
+\begin{proofbox}[逐步证明]
+首先在估计误差中加减 $\E(\hat\theta)$：
+\[
+\begin{aligned}
+  \hat\theta-\theta
+  &=
+  \hat\theta-\E(\hat\theta)
+  +
+  \E(\hat\theta)-\theta\\
+  &=
+  \underbrace{\hat\theta-\E(\hat\theta)}_{\text{随机波动}}
+  +
+  \underbrace{\Bias(\hat\theta)}_{\text{系统偏差}}.
+\end{aligned}
+\]
+记 $B=\Bias(\hat\theta)$。平方：
+\[
+  (\hat\theta-\theta)^2
+  =
+  \bigl(\hat\theta-\E\hat\theta\bigr)^2
+  {}+2B\bigl(\hat\theta-\E\hat\theta\bigr)
+  {}+B^2.
+\]
+两边取期望：
+\[
+\begin{aligned}
+  \MSE(\hat\theta)
+  &=
+  \E\left[\bigl(\hat\theta-\E\hat\theta\bigr)^2\right]
+  {}+2B\,\E\left[\hat\theta-\E\hat\theta\right]
+  {}+B^2\\
+  &=
+  \Var(\hat\theta)+2B(0)+B^2.
+\end{aligned}
+\]
+因此
+\[
+  \MSE(\hat\theta)=\Var(\hat\theta)+B^2.
+\]
+交叉项消失的根本原因是：随机波动
+$\hat\theta-\E(\hat\theta)$ 的期望恒为零。
+\end{proofbox}
+
+\begin{conceptbox}[分解的含义]
+\[
+  \text{总体误差}
+  =
+  \text{随机不稳定性}
+  +
+  \text{系统偏离程度的平方}.
+\]
+若估计量无偏，则
+\[
+  \MSE(\hat\theta)=\Var(\hat\theta).
+\]
+若估计量有偏，比较优劣时不能只比较方差，也不能只比较偏差；必须同时考虑两者。
+\end{conceptbox}
+
+\subsection{有偏估计量可能具有更小的 MSE}
+
+\begin{examplebox}[偏差--方差权衡]
+设 $\bar X$ 是 $\mu$ 的无偏估计量，并且
+\[
+  \Var(\bar X)=4.
+\]
+考虑缩小后的估计量
+\[
+  T=0.8\bar X.
+\]
+当真实参数 $\mu=2$ 时，
+\[
+  \E(T)=0.8\mu=1.6,
+  \qquad
+  \Bias(T)=-0.4.
+\]
+同时
+\[
+  \Var(T)=0.8^2\Var(\bar X)=0.64(4)=2.56.
+\]
+因此
+\[
+  \MSE(T)=2.56+(-0.4)^2=2.72.
+\]
+而
+\[
+  \MSE(\bar X)=\Var(\bar X)=4.
+\]
+虽然 $T$ 有偏，但它通过显著降低方差取得了更小的 MSE。这个例子说明：\textbf{无偏是重要性质，但不是唯一标准。}
+\end{examplebox}
+
+\begin{warnbox}[MSE 可能依赖未知参数]
+上例中
+\[
+  \MSE(0.8\bar X)
+  =
+  0.64\Var(\bar X)+0.04\mu^2,
+\]
+所以有偏估计量是否优于无偏估计量，可能取决于真实参数 $\mu$。比较时必须说明在哪些参数条件下成立。
+\end{warnbox}
+
+\subsection{常用期望、方差与协方差规则}
+
+以下规则是无偏估计题的主要计算工具：
+\[
+  \E(aX+b)=a\E(X)+b,
+\]
+\[
+  \Var(aX+b)=a^2\Var(X),
+\]
+\[
+  \Var(aX+bY)
+  =
+  a^2\Var(X)
+  +
+  b^2\Var(Y)
+  +
+  2ab\Cov(X,Y).
+\]
+
+若 $X,Y$ 独立，则
+\[
+  \Cov(X,Y)=0.
+\]
+但反方向一般不成立：协方差为零只表示无线性关联，未必表示完全独立。
+
+\subsection{通过线性修正构造无偏估计量}
+
+若某估计量满足
+\[
+  \E(T)=a\theta+b,
+  \qquad a\ne0,
+\]
+则可以逆向消除缩放和偏移：
+\[
+  \boxed{
+  T^*=\frac{T-b}{a}.
+  }
+\]
+验证：
+\[
+  \E(T^*)
+  =
+  \frac{\E(T)-b}{a}
+  =
+  \frac{a\theta+b-b}{a}
+  =
+  \theta.
+\]
+
+\begin{methodbox}[构造无偏估计量的答题步骤]
+\begin{enumerate}
+  \item 先计算原估计量 $T$ 的期望；
+  \item 将期望整理为 $a\theta+b$；
+  \item 对 $T$ 做相反的平移和缩放，得到 $(T-b)/a$；
+  \item 最后再取一次期望，验证结果确实等于 $\theta$。
+\end{enumerate}
+\end{methodbox}
+
+\begin{examplebox}[线性修正]
+若
+\[
+  \E(T)=2\theta+3,
+\]
+则
+\[
+  T^*=\frac{T-3}{2}
+\]
+是 $\theta$ 的无偏估计量，因为
+\[
+  \E(T^*)=\frac{2\theta+3-3}{2}=\theta.
+\]
+\end{examplebox}
+
+\begin{examplebox}[缩放后的样本均值]
+设
+\[
+  T=\frac{n-1}{n}\bar X,
+  \qquad
+  \E(\bar X)=\mu.
+\]
+则
+\[
+  \E(T)=\frac{n-1}{n}\mu,
+\]
+所以
+\[
+  \Bias(T)
+  =
+  -\frac{\mu}{n}.
+\]
+将其乘以 $n/(n-1)$ 即可消除偏差：
+\[
+  T^*
+  =
+  \frac{n}{n-1}T
+  =
+  \bar X.
+\]
+\end{examplebox}
+
+\subsection{合并两个无偏估计量}
+
+设 $\hat\theta_1,\hat\theta_2$ 都是 $\theta$ 的无偏估计量。考虑
+\[
+  \hat\theta_a
+  =
+  a\hat\theta_1+(1-a)\hat\theta_2.
+\]
+因为权重和为 1，
+\[
+\begin{aligned}
+  \E(\hat\theta_a)
+  &=
+  a\E(\hat\theta_1)+(1-a)\E(\hat\theta_2)\\
+  &=
+  a\theta+(1-a)\theta\\
+  &=
+  \theta.
+\end{aligned}
+\]
+因此任意固定 $a$ 都保持无偏。接下来应选择使方差最小的 $a$。
+
+若
+\[
+  \Var(\hat\theta_1)=v_1,
+  \quad
+  \Var(\hat\theta_2)=v_2,
+  \quad
+  \Cov(\hat\theta_1,\hat\theta_2)=c,
+\]
+则
+\[
+  \Var(\hat\theta_a)
+  =
+  a^2v_1+(1-a)^2v_2+2a(1-a)c.
+\]
+
+\begin{proofbox}[最优权重推导]
+对 $a$ 求导：
+\[
+\begin{aligned}
+  \frac{d}{da}\Var(\hat\theta_a)
+  &=
+  2av_1-2(1-a)v_2+2(1-2a)c.
+\end{aligned}
+\]
+令导数为零并整理：
+\[
+  a(v_1+v_2-2c)=v_2-c.
+\]
+因此
+\[
+  \boxed{
+  a^*
+  =
+  \frac{v_2-c}{v_1+v_2-2c}.
+  }
+\]
+当两个估计量独立时，$c=0$：
+\[
+  \boxed{
+  a^*=\frac{v_2}{v_1+v_2},
+  \qquad
+  1-a^*=\frac{v_1}{v_1+v_2}.
+  }
+\]
+\end{proofbox}
+
+\begin{intuitionbox}[为什么 $\hat\theta_1$ 的权重公式中出现 $v_2$]
+表面上，$\hat\theta_1$ 的权重
+\[
+  a^*=\frac{v_2}{v_1+v_2}
+\]
+似乎使用了“另一个估计量”的方差。把它改写为
+\[
+  a^*
+  =
+  \frac{1/v_1}{1/v_1+1/v_2}
+\]
+即可看出：权重与自身方差的倒数成正比。方差越小，精度越高，权重越大。
+\end{intuitionbox}
+
+独立时，最小方差为
+\[
+  \boxed{
+  \Var(\hat\theta_{a^*})
+  =
+  \frac{v_1v_2}{v_1+v_2}.
+  }
+\]
+它小于 $v_1$ 和 $v_2$ 中任一个正数，因此合理合并独立信息可以提高精度。
+
+\begin{examplebox}[最优合并的完整计算]
+设两个独立无偏估计量满足
+\[
+  \Var(T_1)=\frac4n,
+  \qquad
+  \Var(T_2)=\frac9n.
+\]
+对组合
+\[
+  T_a=aT_1+(1-a)T_2,
+\]
+最优权重为
+\[
+  a^*
+  =
+  \frac{9/n}{4/n+9/n}
+  =
+  \frac9{13}.
+\]
+因此
+\[
+  T_{a^*}
+  =
+  \frac9{13}T_1+\frac4{13}T_2.
+\]
+$T_1$ 方差更小，所以获得更大权重。最小方差为
+\[
+  \Var(T_{a^*})
+  =
+  \frac{(4/n)(9/n)}{4/n+9/n}
+  =
+  \boxed{\frac{36}{13n}}.
+\]
+\end{examplebox}
+
+\subsection{样本均值为何无偏}
+
+设 $X_1,\ldots,X_n$ 独立同分布，且
+\[
+  \E(X_i)=\mu,
+  \qquad
+  \Var(X_i)=\sigma^2.
+\]
+样本均值为
+\[
+  \bar X=\frac1n\sum_{i=1}^nX_i.
+\]
+利用期望的线性性质：
+\[
+\begin{aligned}
+  \E(\bar X)
+  &=
+  \E\left(\frac1n\sum_{i=1}^nX_i\right)\\
+  &=
+  \frac1n\sum_{i=1}^n\E(X_i)\\
+  &=
+  \frac1n(n\mu)\\
+  &=
+  \boxed{\mu}.
+\end{aligned}
+\]
+所以 $\bar X$ 是 $\mu$ 的无偏估计量。
+
+独立性用于计算方差：
+\[
+\begin{aligned}
+  \Var(\bar X)
+  &=
+  \Var\left(\frac1n\sum_{i=1}^nX_i\right)\\
+  &=
+  \frac1{n^2}\sum_{i=1}^n\Var(X_i)\\
+  &=
+  \frac1{n^2}(n\sigma^2)\\
+  &=
+  \boxed{\frac{\sigma^2}{n}}.
+\end{aligned}
+\]
+
+\begin{conceptbox}[期望计算与方差计算对独立性的需求不同]
+期望的线性性质总是成立，因此证明 $\E(\bar X)=\mu$ 不需要独立性；但要把和的方差写成各方差之和，通常需要独立或至少协方差为零。
+\end{conceptbox}
+
+\subsection{样本方差为何除以 \texorpdfstring{$n-1$}{n-1}}
+
+先定义使用分母 $n$ 的量：
+\[
+  S_n^2
+  =
+  \frac1n\sum_{i=1}^n(X_i-\bar X)^2.
+\]
+它看起来很自然，但它对总体方差 $\sigma^2$ 有向下偏差。无偏样本方差定义为
+\[
+  \boxed{
+  S^2
+  =
+  \frac1{n-1}\sum_{i=1}^n(X_i-\bar X)^2.
+  }
+\]
+
+\begin{intuitionbox}[自由度直觉]
+残差 $X_i-\bar X$ 满足
+\[
+  \sum_{i=1}^n(X_i-\bar X)=0.
+\]
+因此知道前 $n-1$ 个残差后，最后一个残差已经被上述约束决定。虽然表面上有 $n$ 个残差，真正可以自由变化的只有 $n-1$ 个，所以用于估计方差的自由度为 $n-1$。
+\end{intuitionbox}
+
+\begin{proofbox}[关键恒等式]
+对每个 $i$，
+\[
+  X_i-\bar X
+  =
+  (X_i-\mu)-(\bar X-\mu).
+\]
+平方求和：
+\[
+\begin{aligned}
+  \sum_{i=1}^n(X_i-\bar X)^2
+  &=
+  \sum_{i=1}^n
+  \left[(X_i-\mu)-(\bar X-\mu)\right]^2\\
+  &=
+  \sum_{i=1}^n(X_i-\mu)^2
+  {}+n(\bar X-\mu)^2\\
+  &\quad
+  -2(\bar X-\mu)\sum_{i=1}^n(X_i-\mu).
+\end{aligned}
+\]
+注意
+\[
+  \sum_{i=1}^n(X_i-\mu)
+  =
+  n(\bar X-\mu).
+\]
+所以
+\[
+  \boxed{
+  \sum_{i=1}^n(X_i-\bar X)^2
+  =
+  \sum_{i=1}^n(X_i-\mu)^2
+  -
+  n(\bar X-\mu)^2.
+  }
+\]
+\end{proofbox}
+
+对恒等式两边取期望：
+\[
+\begin{aligned}
+  \E\left[
+  \sum_{i=1}^n(X_i-\bar X)^2
+  \right]
+  &=
+  \sum_{i=1}^n\E[(X_i-\mu)^2]
+  -
+  n\E[(\bar X-\mu)^2]\\
+  &=
+  n\sigma^2
+  -
+  n\Var(\bar X)\\
+  &=
+  n\sigma^2
+  -
+  n\left(\frac{\sigma^2}{n}\right)\\
+  &=
+  (n-1)\sigma^2.
+\end{aligned}
+\]
+因此
+\[
+  \E(S_n^2)
+  =
+  \frac{n-1}{n}\sigma^2,
+\]
+而
+\[
+  \boxed{
+  \E(S^2)
+  =
+  \frac1{n-1}(n-1)\sigma^2
+  =
+  \sigma^2.
+  }
+\]
+
+\begin{intuitionbox}[为什么用样本均值会低估波动]
+样本均值 $\bar X$ 是专门根据当前样本选择出来的中心，它使
+\[
+  \sum(X_i-\bar X)^2
+\]
+达到最小。因此样本点围绕 $\bar X$ 的平方距离，通常比它们围绕真实但未知的 $\mu$ 的平方距离更小。除以 $n-1$ 正是在平均意义上修正这一低估。
+\end{intuitionbox}
+
+\subsection{\texorpdfstring{$S^2$ 无偏不代表 $S$ 无偏}{S2 无偏不代表 S 无偏}}
+
+已知
+\[
+  \E(S^2)=\sigma^2.
+\]
+但通常不能对期望直接开平方：
+\[
+  \E(S)
+  =
+  \E(\sqrt{S^2})
+  \ne
+  \sqrt{\E(S^2)}
+  =
+  \sigma.
+\]
+由于平方根函数是凹函数，Jensen 不等式给出
+\[
+  \E(S)\leq\sqrt{\E(S^2)}=\sigma,
+\]
+在非退化情形下通常严格小于。因此样本标准差 $S$ 通常向下有偏。
+
+\begin{warnbox}[常见错误]
+\begin{itemize}
+  \item 从 $\E(T)=\theta$ 不能推出 $\E[g(T)]=g(\theta)$；
+  \item 从 $S^2$ 对 $\sigma^2$ 无偏，不能推出 $S$ 对 $\sigma$ 无偏；
+  \item 从两个估计量都无偏，不能推出它们方差相同；
+  \item 比较估计量时，不能只说“这个无偏，所以一定更好”；
+  \item 计算线性组合方差时，不能忘记协方差项。
+\end{itemize}
+\end{warnbox}
+
+\subsection{综合例题}
+
+\begin{examplebox}[例题：比较两个估计量]
+设 $X_1,\ldots,X_n$ 独立同分布，均值为 $\mu$、方差为 $\sigma^2$。比较
+\[
+  T_1=\bar X,
+  \qquad
+  T_2=\frac{n-1}{n}\bar X.
+\]
+
+\textbf{第一步：计算偏差。}
+\[
+  \Bias(T_1)=0,
+\]
+\[
+  \Bias(T_2)
+  =
+  \frac{n-1}{n}\mu-\mu
+  =
+  -\frac{\mu}{n}.
+\]
+
+\textbf{第二步：计算方差。}
+\[
+  \Var(T_1)=\frac{\sigma^2}{n},
+\]
+\[
+  \Var(T_2)
+  =
+  \left(\frac{n-1}{n}\right)^2\frac{\sigma^2}{n}
+  =
+  \frac{(n-1)^2\sigma^2}{n^3}.
+\]
+
+\textbf{第三步：计算 MSE。}
+\[
+  \MSE(T_1)=\frac{\sigma^2}{n},
+\]
+\[
+  \MSE(T_2)
+  =
+  \frac{(n-1)^2\sigma^2}{n^3}
+  +
+  \frac{\mu^2}{n^2}.
+\]
+
+$T_2$ 虽然方差更小，但有偏。因此不能仅凭无偏性或方差判断谁更好；需要比较上述两个 MSE，而比较结果可能依赖 $\mu$ 与 $\sigma^2$。
+\end{examplebox}
+
+\subsection{答题模板}
+
+\begin{methodbox}[证明某估计量无偏]
+\[
+  \E(\hat\theta)
+  =
+  \text{逐步使用期望线性性质}
+  =
+  \theta.
+\]
+最后明确写出：“因此 $\hat\theta$ 是 $\theta$ 的无偏估计量。”
+\end{methodbox}
+
+\begin{methodbox}[计算某估计量的 MSE]
+\begin{enumerate}
+  \item 计算 $\E(\hat\theta)$；
+  \item 得到 $\Bias(\hat\theta)=\E(\hat\theta)-\theta$；
+  \item 计算 $\Var(\hat\theta)$；
+  \item 使用
+  \[
+    \MSE(\hat\theta)
+    =
+    \Var(\hat\theta)+\Bias(\hat\theta)^2.
+  \]
+\end{enumerate}
+\end{methodbox}
+
+\begin{methodbox}[合并两个无偏估计量]
+\begin{enumerate}
+  \item 先验证权重和为 1，从而组合仍无偏；
+  \item 写出完整方差，包含协方差项；
+  \item 对权重求导并令其为零；
+  \item 检查所得权重确实给出最小值；
+  \item 解释方差较小的估计量为何获得更大权重。
+\end{enumerate}
+\end{methodbox}
+
+\begin{summarybox}[第 2 部分的核心]
+\[
+  \boxed{
+  \text{Bias 描述中心位置，Variance 描述波动，MSE 同时衡量二者。}
+  }
+\]
+\[
+  \boxed{
+  \MSE(\hat\theta)
+  =
+  \Var(\hat\theta)+\Bias(\hat\theta)^2.
+  }
+\]
+无偏估计量的 MSE 等于方差，但有偏估计量也可能通过降低方差取得更小的 MSE。样本均值是总体均值的无偏估计；样本方差必须除以 $n-1$，才能修正使用样本均值作为中心造成的平均低估。
+\end{summarybox}
+
+\section{最后自测}
+
+\begin{enumerate}
+  \item 参数与估计量中，哪一个在频率学派中固定，哪一个随机？
+  \item 标准差与标准误分别描述什么？
+  \item 为什么配对样本不能直接当作两个独立样本？
+  \item 为什么总体方差未知时，单样本均值推断使用 $t$ 而不是 $Z$？
+  \item 无偏估计量是否一定比有偏估计量具有更小的 MSE？
+  \item 在 MSE 分解证明中，交叉项为什么为零？
+  \item 为什么独立估计量的最优组合权重与方差的倒数成正比？
+  \item 为什么样本方差使用 $n-1$？这与自由度有什么关系？
+  \item 为什么 $S^2$ 无偏不能推出 $S$ 无偏？
+\end{enumerate}
+
+\begin{goalbox}[自测答案提示]
+\begin{enumerate}
+  \item 参数固定未知；估计量随样本变化。
+  \item 标准差描述个体波动；标准误描述估计量的抽样波动。
+  \item 配对数据存在一一对应关系，应分析差值。
+  \item 用随机的 $S$ 替换 $\sigma$ 引入额外不确定性，得到 $t$ 分布。
+  \item 不一定，应比较 MSE。
+  \item 因为 $\E[\hat\theta-\E(\hat\theta)]=0$。
+  \item 方差越小代表精度越高，所以应获得更大权重。
+  \item 估计样本均值消耗一个自由度，且围绕 $\bar X$ 的平方距离平均偏小。
+  \item 一般有 $\E[g(T)]\ne g(\E T)$；平方根还是凹函数。
+\end{enumerate}
+\end{goalbox}
+
+\end{document}
